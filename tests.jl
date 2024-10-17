@@ -6,6 +6,9 @@ import Plots
 using Symbolics
 using Statistics
 
+
+
+
 function test_reversibility(ϕ, dSdϕ, lf_steps, Δτ, S_args)
     p_0 = randn(Float64, size(ϕ))
 
@@ -178,10 +181,10 @@ function test_expval(ϕ, S, dSdϕ, N, Δτ, S_args, HMC_steps, steps_skipped)
 
     Plots.plot(ΔHs) |> display
     expval = sum(ΔHs[steps_skipped:end]) / length(ΔHs[steps_skipped:end])
-    print(mean(ΔHs[steps_skipped:end]))
+
     exp_ΔH = exp(-(expval))
     acceptance_rate = sum(accepted) / length(accepted)
-    @info "Checking the exponental of the mean value of ΔH" exp_ΔH N Δτ HMC_steps steps_skipped acceptance_rate
+    @info "Checking the exponental of the mean value of ΔH" exp_ΔH N Δτ HMC_steps steps_skipped acceptance_rate mean(ΔHs[steps_skipped:end])
 end
 
 function symbolic2_test()
@@ -222,11 +225,10 @@ function benchmarkS2d()
     t1 = benchmark2d(Action.S_2d, ϕs, true)
     benchmark2d(Action.S_v2_2d, ϕs, true)
     t2 = benchmark2d(Action.S_v2_2d, ϕs, true)
-    benchmark2d(Action.S_shift_2d, ϕs, true)
-    t3 = benchmark2d(Action.S_shift_2d, ϕs, true)
     benchmark2d(Action.S_SAshift_2d, ϕs, true)
-    t5 = benchmark2d(Action.S_SAshift_2d, ϕs, true)
-    display(sum(abs.(t1 - t5)))
+    t3 = benchmark2d(Action.S_SAshift_2d, ϕs, true)
+    display(sum(abs.(t1 - t3)))
+    display(sum(abs.(t2 - t3)))
 
 end
 function benchmarkdSdϕ2d()
@@ -241,10 +243,10 @@ function benchmarkS3d()
     t1 = benchmark3d(Action.S_3d, ϕs, true)
     benchmark3d(Action.S_v2_3d, ϕs, true)
     t2 = benchmark3d(Action.S_v2_3d, ϕs, true)
-
     benchmark3d(Action.S_SAshift_3d, ϕs, true)
-    t4 = benchmark3d(Action.S_SAshift_3d, ϕs, true)
-    display(sum(abs.(t1 - t4)))
+    t3 = benchmark3d(Action.S_SAshift_3d, ϕs, true)
+    display(sum(abs.(t1 - t3)))
+    display(sum(abs.(t2 - t3)))
 end
 function benchmarkdSdϕ3d()
     ϕs = randn((100, 3, 20, 20, 20))
@@ -326,9 +328,9 @@ function main()
 
     test_p_dist(Action.S_SAshift_3d, Action.dSdϕ_SAshift_3d, 3, 16, 100, 10, 0.05, (1,), 300)
 
-    # test_reversibility(zeros((2, 100, 100)), Action.dSdϕ_SAshift_2d, 10, 100, (1,))
+    # test_reversibility(zeros((2, 100, 100)), Action.dSdϕ_SAshift_2d, 1000, 0.05, (1,))
 
-    # test_derivative(Action.dSdϕ_2d, Action.dSdϕ_SAshift_2d, 2,10)
+    # test_derivative(Action.dSdϕ_2d, Action.dSdϕ_SAshift_2d, 2,100)
 
     # dSdϕ(ϕ, J, μ, n) = Action.dSdϕ_SAshift_3d(ϕ, J)[μ, n...]
     # test_derivative_numerical(Action.S_SAshift_3d, dSdϕ, 3, 30, 0.0001)

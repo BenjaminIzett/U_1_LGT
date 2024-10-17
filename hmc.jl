@@ -10,7 +10,7 @@ function hmc_run(ϕ, S, dSdϕ, lf_steps, Δτ, S_args)
 
     H_init = S(ϕ, S_args...) + 1 / 2 * sum(p_0 .^ 2)
 
-    ϕ_new, p_new = leapfrog(copy(ϕ), p_0, dSdϕ, lf_steps, Δτ, S_args)
+    ϕ_new, p_new = leapfrog(ϕ, p_0, dSdϕ, lf_steps, Δτ, S_args)
 
     H_final = S(ϕ_new, S_args...) + 1 / 2 * sum(p_new .^ 2)
 
@@ -24,14 +24,14 @@ function hmc_run(ϕ, S, dSdϕ, lf_steps, Δτ, S_args)
     end
 end
 
-function leapfrog(ϕ_0, p_0, dSdϕ, lf_steps, Δτ, S_args)
-    ϕ_half = ϕ_0 + p_0 * Δτ / 2
+function leapfrog(ϕ, p, dSdϕ, lf_steps, Δτ, S_args)
+    ϕ_half = ϕ + p * Δτ / 2
     for _ in 1:lf_steps-1
-        p_0 = p_0 - dSdϕ(ϕ_half, S_args...) * Δτ
-        ϕ_half = ϕ_half + p_0 * Δτ
+        p = p - dSdϕ(ϕ_half, S_args...) * Δτ
+        ϕ_half = ϕ_half + p * Δτ
     end
 
-    p_final = p_0 - dSdϕ(ϕ_half, S_args...) * Δτ
+    p_final = p - dSdϕ(ϕ_half, S_args...) * Δτ
     ϕ_final = ϕ_half + p_final * Δτ / 2
     return ϕ_final, p_final
 end
