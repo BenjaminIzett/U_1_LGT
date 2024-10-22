@@ -1,10 +1,12 @@
 include("action.jl")
 include("hmc.jl")
+include("data_handler.jl")
+
 using Statistics
 import Plots
+using DelimitedFiles
 
 
-using JLD
 #initial field
 #update field
 #steps_to_thermalise
@@ -26,38 +28,33 @@ function mean_plaquette2d(ϕ, J)
 end
 
 
-function measure(file_name, ϕ_init, initial_steps, measurement_interval, Nmeasurements, update, update_args, measurement_functions, measurement_args)
-    # temporarily disabled saving to file and just output mean values
+function measure(filename, mode, ϕ_init, initial_steps, measurement_interval, Nmeasurements, update, update_args, measurement_functions, measurement_args, measurement_info)
     ϕ = ϕ_init
     for _ in 1:initial_steps
         ϕ = update(ϕ, update_args...)[1]
     end
-    testres = []
+
     accept_count = 0
-    # jldopen("measurements/$file_name.jdl", "w") do file
-    for ith_measurement in 1:Nmeasurements
-        # print(ith_measurement)
-        for _ in 1:measurement_interval
+    open("measurements/$filename", mode) do io
+        write(io, "# $Nmeasurements\n")
+        for ith_measurement in 1:Nmeasurements
+            # print(ith_measurement)
+            for _ in 1:measurement_interval
 
-            ϕ, ΔH, accepted = update(ϕ, update_args...)
-            accept_count += accepted
+                ϕ, ΔH, accepted = update(ϕ, update_args...)
+                accept_count += accepted
+            end
+
+
+            measurement = map((f, args) -> f(ϕ, args...), measurement_functions, measurement_args)
+            writedlm(io, [measurement_info... measurement...])
         end
-
-
-        m1 = mean_plaquette3d(ϕ, measurement_args[1]...)
-
-        push!(testres, m1)
-
-        measurement = map(fargs_pair -> fargs_pair[1](ϕ, fargs_pair[2]...), collect(zip(measurement_functions, measurement_args)))
-        # write(file, "measurement_$ith_measurement", measurement)
     end
     accept_rate = accept_count / (Nmeasurements * measurement_interval)
     # write(file, "final_config", ϕ)
-    print("mean\n")
-    print(mean(testres))
-    print("\nstd\n")
-    print(std(testres))
-    print("\n")
+    DataHandler.save_field("final_fields/$filename", ϕ)
+
+
     print("acceptance rate: $accept_rate\n")
     # end
     #save field for later con
@@ -71,9 +68,9 @@ dataβ = [1.0, 1.35, 1.41, 1.55, 1.70, 1.90, 2.0, 2.25, 2.5, 2.75, 3.0]
 dataP = [0.475, 0.629, 0.656, 0.704, 0.748, 0.790, 0.806, 0.834, 0.854, 0.869, 0.881]
 
 
-# for β in dataβ
-#     measure("test3d-$β", zeros(Float64, (3, 16, 16, 16)), 100, 10, 100, HMC.hmc_run, (Action.S_SAshift_3d, Action.dSdϕ_SAshift_3d, 10, 0.05, (β,)), (mean_plaquette3d,), ((β,),))
-# end
+for β in dataβ
+    measure("test_a.txt", "a", zeros(Float64, (3, 16, 16, 16)), 100, 5, 20, HMC.hmc_run, (Action.S_SAshift_3d, Action.dSdϕ_SAshift_3d, 10, 0.05, (β,)), (mean_plaquette3d,), ((β,),), (β, 16))
+end
 
 # run16 = [0.614, 0.732, 0.744, 0.770, 0.793, 0.816, 0.827, 0.846, 0.862, 0.876, 0.887]
 run16 = [0.475, 0.630, 0.654, 0.704, 0.749, 0.792, 0.807, 0.836, 0.854, 0.869, 0.881]
