@@ -87,7 +87,7 @@ end
 
 function dSdϕ_2d(ϕ, J, μ, n)
     ϕ_padded = padded2d(ϕ)
-    μ_b = 3-μ
+    μ_b = 3 - μ
     J * (sin(curl2(ϕ_padded, μ_b, μ, 1 .+ (n - unit_vectors_2d[μ_b]))) - sin(curl2(ϕ_padded, μ_b, μ, 1 .+ n)))
 end
 
@@ -111,6 +111,7 @@ function S_v2_3d(ϕ, J)
     J * sum([3 - (cos(curl3(ϕ_padded, 2, 1, [nx, ny, nz])) + cos(curl3(ϕ_padded, 3, 1, [nx, ny, nz])) + cos(curl3(ϕ_padded, 3, 2, [nx, ny, nz]))) for nx in 2:Nx+1 for ny in 2:Ny+1 for nz in 2:Nz+1])
 end
 
+# these are the functions that are actually used
 function S_SAshift_3d(ϕ, J)
     J * sum(3 .- (cos.(curl_SAshift_3(ϕ, 2, 1, [0, 0, 0])) + cos.(curl_SAshift_3(ϕ, 3, 1, [0, 0, 0])) + cos.(curl_SAshift_3(ϕ, 3, 2, [0, 0, 0]))))
 end

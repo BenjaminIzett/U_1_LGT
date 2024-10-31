@@ -6,6 +6,7 @@ import Plots
 using Symbolics
 using Statistics
 
+import ShiftedArrays
 
 
 
@@ -323,10 +324,26 @@ function ΔHΔτ(ϕ, S, dSdϕ, S_args, hmc_runs, initial_steps)
     plot |> display
 end
 
+function random_gauge_transform(N, ϕ, S, S_args)
+    # assumes first dimension of ϕ is direction: e1,e2,e3
+    if N == 3
+        χ = (rand(Float64, size(ϕ)[2:end]) * 2 .- 1) * pi
+        Δχ1 = ShiftedArrays.circshift(χ, -[1, 0, 0]) - χ
+        Δχ2 = ShiftedArrays.circshift(χ, -[0, 1, 0]) - χ
+        Δχ3 = ShiftedArrays.circshift(χ, -[0, 0, 1]) - χ
+        ϕ_n = copy(ϕ)
+        ϕ_n[1, :, :, :] += Δχ1
+        ϕ_n[2, :, :, :] += Δχ2
+        ϕ_n[3, :, :, :] += Δχ3
+        @info "Random Gauge Transformation" abs(S(ϕ, S_args...) - S(ϕ_n, S_args...))
+    else
+        display("Not implemented for N ≠ 3")
+    end
+end
 
 function main()
 
-    test_p_dist(Action.S_SAshift_3d, Action.dSdϕ_SAshift_3d, 3, 16, 100, 10, 0.05, (1,), 300)
+    # test_p_dist(Action.S_SAshift_3d, Action.dSdϕ_SAshift_3d, 3, 16, 100, 10, 0.05, (1,), 300)
 
     # test_reversibility(zeros((2, 100, 100)), Action.dSdϕ_SAshift_2d, 1000, 0.05, (1,))
 
@@ -337,7 +354,7 @@ function main()
 
 
     # test_expval(zeros((2, 10, 10)), Action.S_2d, Action.dSdϕ_SAshift_2d, 100, 0.05, (1,), 10000, 300)
-    # test_expval(zeros((3, 16, 16, 16)), Action.S_SAshift_3d, Action.dSdϕ_SAshift_3d, 10, 0.05, (1,), 10000, 300)
+    test_expval(zeros((3, 16, 16, 16)), Action.S_SAshift_3d, Action.dSdϕ_SAshift_3d, 10, 0.05, (1,), 1000, 300)
 
     # benchmarkS2d()
     # benchmarkS3d()
@@ -347,6 +364,8 @@ function main()
     # symbolic2_test()
 
     # ΔHΔτ(zeros(3, 16, 16, 16), Action.S_SAshift_3d, Action.dSdϕ_SAshift_3d, (1,), 100, 100)
+
+    # random_gauge_transform(3, rand(Float64, (3, 32, 32, 32)), Action.S_3d, (1,))
 end
 
 main()
