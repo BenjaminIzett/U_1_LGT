@@ -166,13 +166,11 @@ function test_XY_p_dist(dSdϕ, N)
 
 end
 
-function test_expval(ϕ, S, dSdϕ, N, Δτ, S_args, HMC_steps, steps_skipped)
-    ϕs = [ϕ]
+function test_expval(ϕ, S, dSdϕ, lf_steps, Δτ, S_args, HMC_steps, steps_skipped)
     ΔHs = []
     accepted = []
     for k in 2:HMC_steps+1
-        ϕ_k, ΔH_k, accepted_k = HMC.hmc_run(ϕs[k-1], S, dSdϕ, N, Δτ, S_args)
-        push!(ϕs, ϕ_k)
+        ϕ, ΔH_k, accepted_k = HMC.hmc_run(ϕ, S, dSdϕ, lf_steps, Δτ, S_args)
         push!(ΔHs, ΔH_k)
         push!(accepted, accepted_k)
         if k % 100 == 0
@@ -181,11 +179,11 @@ function test_expval(ϕ, S, dSdϕ, N, Δτ, S_args, HMC_steps, steps_skipped)
     end
 
     Plots.plot(ΔHs) |> display
-    expval = sum(ΔHs[steps_skipped:end]) / length(ΔHs[steps_skipped:end])
+    meanΔHs = mean(ΔHs[steps_skipped:end])
 
-    exp_ΔH = exp(-(expval))
+    exp_ΔH = mean(exp.(ΔHs[steps_skipped:end] * -1))
     acceptance_rate = sum(accepted) / length(accepted)
-    @info "Checking the exponental of the mean value of ΔH" exp_ΔH N Δτ HMC_steps steps_skipped acceptance_rate mean(ΔHs[steps_skipped:end])
+    @info "Checking the exponental of the mean value of ΔH" exp_ΔH lf_steps Δτ HMC_steps steps_skipped acceptance_rate meanΔHs
 end
 
 function symbolic2_test()
@@ -354,7 +352,7 @@ function main()
 
 
     # test_expval(zeros((2, 10, 10)), Action.S_2d, Action.dSdϕ_SAshift_2d, 100, 0.05, (1,), 10000, 300)
-    test_expval(zeros((3, 16, 16, 16)), Action.S_SAshift_3d, Action.dSdϕ_SAshift_3d, 10, 0.05, (1,), 1000, 300)
+    test_expval(zeros((3, 16, 16, 16)), Action.S_SAshift_3d, Action.dSdϕ_SAshift_3d, 9, 0.115, (1,), 1000, 300)
 
     # benchmarkS2d()
     # benchmarkS3d()

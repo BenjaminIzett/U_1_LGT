@@ -14,6 +14,7 @@ include("data_handler.jl")
 
 DataHandler.specific_heat_capacity("plaquette_heat_capacity.txt")
 
+
 function int_autocorrelation_time(ρ_a, N)
     # The search for M is not optimal but good enough
     M = 1
@@ -40,3 +41,5 @@ function int_autocorrelation_time(filename)
 end
 
 int_autocorrelation_time("autocorrelation_1_05_10000.txt")
+
+# DataHandler.analyse_data("measurements/long_test_full.txt", "analysis/long_test_full.txt", (3, 3,), (mean, std,))
