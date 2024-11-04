@@ -182,8 +182,9 @@ function test_expval(ϕ, S, dSdϕ, lf_steps, Δτ, S_args, HMC_steps, steps_skip
     meanΔHs = mean(ΔHs[steps_skipped:end])
 
     exp_ΔH = mean(exp.(ΔHs[steps_skipped:end] * -1))
+    std_exp_exp_ΔH = std(exp.(ΔHs[steps_skipped:end] * -1))
     acceptance_rate = sum(accepted) / length(accepted)
-    @info "Checking the exponental of the mean value of ΔH" exp_ΔH lf_steps Δτ HMC_steps steps_skipped acceptance_rate meanΔHs
+    @info "Checking the exponental of the mean value of ΔH" exp_ΔH std_exp_exp_ΔH lf_steps Δτ HMC_steps steps_skipped acceptance_rate meanΔHs
 end
 
 function symbolic2_test()

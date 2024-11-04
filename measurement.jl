@@ -16,6 +16,26 @@ using LinearAlgebra
 #update_field args
 #measurement args
 
+function optimal_lf_steps(update, update_args)
+    trajectory_length = 1
+    initial_steps = 300
+    measurement_steps = 300
+    rate_min = 0.65
+    rate_max = 0.7
+
+    accept_rate = 0
+    while accept_rate <
+          for _ in 1:initial_steps
+        ϕ = update(ϕ, update_args...)[1]
+    end
+        for _ in 1:steps
+            ϕ, ΔH, accepted = update(ϕ, update_args...)
+
+            accept_count += accepted
+        end
+        accept_count / steps
+    end
+end
 
 function mean_plaquette3d(ϕ, J)
     1 - Action.S_SAshift_3d(ϕ, J) / (length(ϕ) * J)
@@ -56,15 +76,45 @@ function loop3d(ϕ, μ, ν, rμ, rν, n)
 
     α = 6 - μ - ν # the index perp to loop
 
-    μp_indices = mod1.(n[μ] .+ (0:rμ-1), size_μ)
-    νp_indices = mod1.(n[ν] .+ (0:rν-1), size_ν)
-    #can reverse order in last two terms but since we are just adding it doesnt matter
-    loop = sum(ϕ[μ, (unit_vectors_3d[α] * n[α] + unit_vectors_3d[μ] * ind + unit_vectors_3d[ν] * νp_indices[1])...] for ind in μp_indices) +
-           sum(ϕ[ν, (unit_vectors_3d[α] * n[α] + unit_vectors_3d[μ] * μp_indices[end] + unit_vectors_3d[ν] * ind)...] for ind in νp_indices) +
-           sum(-ϕ[μ, (unit_vectors_3d[α] * n[α] + unit_vectors_3d[μ] * ind + unit_vectors_3d[ν] * νp_indices[end])...] for ind in μp_indices) +
-           sum(-ϕ[ν, (unit_vectors_3d[α] * n[α] + unit_vectors_3d[μ] * μp_indices[1] + unit_vectors_3d[ν] * ind)...] for ind in νp_indices)
+    μp_indices = mod1.(n[μ] .+ (0:rμ), size_μ)
+    νp_indices = mod1.(n[ν] .+ (0:rν), size_ν)
 
-    loop
+
+    #can reverse order in last two terms but since we are just adding it doesnt matter
+
+    loop = sum(ϕ[μ, (unit_vectors_3d[α] * n[α] + unit_vectors_3d[μ] * ind + unit_vectors_3d[ν] * νp_indices[1])...] for ind in μp_indices[1:end-1]) +
+           sum(ϕ[ν, (unit_vectors_3d[α] * n[α] + unit_vectors_3d[μ] * μp_indices[end] + unit_vectors_3d[ν] * ind)...] for ind in νp_indices[1:end-1]) +
+           sum(-ϕ[μ, (unit_vectors_3d[α] * n[α] + unit_vectors_3d[μ] * ind + unit_vectors_3d[ν] * νp_indices[end])...] for ind in μp_indices[1:end-1]) +
+           sum(-ϕ[ν, (unit_vectors_3d[α] * n[α] + unit_vectors_3d[μ] * μp_indices[1] + unit_vectors_3d[ν] * ind)...] for ind in νp_indices[1:end-1])
+    cos(loop)
+end
+
+function site_average_loop3d(ϕ, μ, ν, rμ, rν)
+    mean(loop3d(ϕ, μ, ν, rμ, rν, [nx, ny, nz]) for nx in 1:size(ϕ)[2] for ny in 1:size(ϕ)[3] for nz in 1:size(ϕ)[4])
+end
+function site_dir_average_loop3d(ϕ, rμ, rν)
+    mean(site_average_loop3d(ϕ, μ, ν, rμ, rν) for (μ, ν) in [(1, 2), (1, 3), (2, 3)])
+end
+function range_loop3d(ϕ, rμ_range, rν_range)
+    collect((rμ, rν, site_dir_average_loop3d(ϕ, rμ, rν)) for rμ in rμ_range for rν in rν_range)
+end
+
+function sum_lattice3d(ϕ, s1, s2, s3)
+    #assumes s1, s2, s3 are multiples of lattice size
+    size_ϕ = size(ϕ)
+    Dx = Int(size_ϕ[2] / s1)
+    Dy = Int(size_ϕ[3] / s2)
+    Dz = Int(size_ϕ[4] / s3)
+
+    ϕ_sum = zeros(Float64, (3, Dx, Dy, Dz))
+    for i in 1:Dx
+        for j in 1:Dy
+            for k in 1:Dz
+                ϕ_sum[:, i, j, k] = sum(ϕ[:, 2*i-1:2*i, 2*j-1:2*j, 2*k-1:2*k], dims=(2, 3, 4))
+            end
+        end
+    end
+    ϕ_sum
 end
 
 function benchmark_loops(n_runs)
@@ -124,7 +174,8 @@ function measure(filename, mode, ϕ_init, initial_steps, measurement_interval, N
 
 
             measurement = map((f, args) -> f(ϕ, args...), measurement_functions, measurement_args)
-            writedlm(io, [measurement_info... measurement...])
+            # display(measurement)
+            writedlm(io, [measurement_info... Iterators.flatten(measurement...)...])
         end
     end
     accept_rate = accept_count / (Nmeasurements * measurement_interval)
@@ -212,9 +263,14 @@ lf_steps = Int(round(1 / Δτ))
 # acceptance_rate((rand(Float64,(3,16,16,16))*2 .-1)*pi, HMC.hmc_run, (Action.S_SAshift_3d, Action.dSdϕ_SAshift_3d, lf_steps, Δτ, (β,)), 200, 100)
 # measure("plaquette_v_trajectory_hot.txt", "w", (rand(Float64, (3, 16, 16, 16)) * 2 .- 1) * pi, 0, 1, 150, HMC.hmc_run, (Action.S_SAshift_3d, Action.dSdϕ_SAshift_3d, lf_steps, Δτ, (β,)), (mean_plaquette3d,), ((β,),), (β, 16))
 
+# β = 1
+# Δτ = 0.115
+# lf_steps = Int(round(1 / Δτ))
+# for nth_run in 1:10
+#     measure("autocorrelation/autocorrelation_$(β)_10000_$(nth_run).txt", "w", zeros(Float64, (3, 16, 16, 16)), 250, 1, 10000, HMC.hmc_run, (Action.S_SAshift_3d, Action.dSdϕ_SAshift_3d, 10, 0.05, (β,)), (mean_plaquette3d,), ((β,),), (β, 16))
+# end
+
 β = 1
 Δτ = 0.115
 lf_steps = Int(round(1 / Δτ))
-for _ in 1:10
-    measure("plaquette_heat_capacity.txt", "a", (zeros(Float64, (3, 16, 16, 16)) * 2 .- 1) * pi, 250, 10, 10, HMC.hmc_run, (Action.S_SAshift_3d, Action.dSdϕ_SAshift_3d, lf_steps, Δτ, (β,)), (mean_plaquette3d,), ((β,),), (β, 16))
-end
+measure("wilson_loop1.txt", "w", zeros(Float64, (3, 16, 16, 16)), 250, 10, 2, HMC.hmc_run, (Action.S_SAshift_3d, Action.dSdϕ_SAshift_3d, lf_steps, Δτ, (β,)), (range_loop3d,), ((1:8, 1:8,),), (β, 16))
