@@ -58,12 +58,12 @@ function curl3(ϕ, μ, ν, n)
 end
 
 
-function curl_SAshift_3(ϕ, μ, ν, n)
+function curl_SAshift_3(ϕ, μ, ν, k)
+    # returns an array A such that A[n] = θ_μν(n+k) where n is a lattice site
     if μ == ν
         return 0
     else
-
-        return ShiftedArrays.circshift(ϕ[ν, :, :, :], -(n + unit_vectors_3d[μ])) - ShiftedArrays.circshift(ϕ[ν, :, :, :], -n) - ShiftedArrays.circshift(ϕ[μ, :, :, :], -(n + unit_vectors_3d[ν])) + ShiftedArrays.circshift(ϕ[μ, :, :, :], -n)
+        return ShiftedArrays.circshift(ϕ[ν, :, :, :], -(k + unit_vectors_3d[μ])) - ShiftedArrays.circshift(ϕ[ν, :, :, :], -k) - ShiftedArrays.circshift(ϕ[μ, :, :, :], -(k + unit_vectors_3d[ν])) + ShiftedArrays.circshift(ϕ[μ, :, :, :], -k)
     end
 end
 

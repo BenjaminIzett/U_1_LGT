@@ -59,10 +59,10 @@ function int_autocorrelation_time(filename)
     data = DataHandler.load_data("analysis/$filename")
     N = data[1]
     ρ_a = data[2:end]
-    int_autocorrelation_time(ρ_a, N)
+    return int_autocorrelation_time(ρ_a, N)
 end
 
-# int_autocorrelation_time("autocorrelation_1_05_10000.txt")
+int_autocorrelation_time("autocorrelation_1_05_10000.txt")
 
 # DataHandler.analyse_data("measurements/long_test_full.txt", "analysis/long_test_full.txt", (3, 3,), (mean, std,))
-file_mean(["autocorrelation/autocorrelation_1_10000_$(nth_run).txt" for nth_run in 1:10], "autocorrelation_mean.txt")
+# file_mean(["autocorrelation/autocorrelation_1_10000_$(nth_run).txt" for nth_run in 1:10], "autocorrelation_mean.txt")

@@ -51,14 +51,27 @@ end
 
 
 function autocorrelation_a(a, data)
+
     N = length(data)
+
     mean_data = mean(data)
     Γ_0 = var(data)
+
     Γ_a = (1 / (N - a)) * sum((data[1:N-a] .- mean_data) .* (data[1+a:N] .- mean_data))
+
     Γ_a / Γ_0
+
 end
-function autocorrelation(range, filename)
-    DataHandler.analyse_data("measurements/$filename", "analysis/$filename", tuple(1, [3 for _ in range]...), tuple(length, [data -> autocorrelation_a(n, data) for n in range]...))
+function autocorrelation(a_range, filename)
+    DataHandler.analyse_data("measurements/$filename", "analysis/$filename", tuple(1, [5 for _ in a_range]...), tuple(length, [data -> autocorrelation_a(n, data) for n in a_range]...))
+
+end
+function autocorrelation(a_range, index, filename)
+    DataHandler.analyse_data("measurements/$filename", "analysis/$filename", tuple(1, [index for _ in a_range]...), tuple(length, [data -> autocorrelation_a(n, data) for n in a_range]...))
+
+end
+function autocorrelation(a_range, indices, filename)
+    DataHandler.analyse_data("measurements/$filename", "analysis/$filename", tuple(1, Iterators.flatten([[index for _ in a_range] for index in indices])...), tuple(length, Iterators.flatten([[data -> autocorrelation_a(n, data) for n in a_range] for _ in indices])...))
 
 end
 function calc_specific_heat_capacity(energies)

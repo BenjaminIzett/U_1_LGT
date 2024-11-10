@@ -7,6 +7,8 @@ import Plots
 using DelimitedFiles
 using LinearAlgebra
 
+import ShiftedArrays as sa
+import SpecialFunctions as sf
 #initial field
 #update field
 #steps_to_thermalise
@@ -97,6 +99,93 @@ function site_dir_average_loop3d(ϕ, rμ, rν)
 end
 function range_loop3d(ϕ, rμ_range, rν_range)
     collect((rμ, rν, site_dir_average_loop3d(ϕ, rμ, rν)) for rμ in rμ_range for rν in rν_range)
+end
+
+function wilson_loop3d(ϕ, spatial_path, τ, J)
+    # Assumes that the temporal direction is in the e_3 direction ie [0,0,1] basis vector
+    # τ should be <= half the temporal lattice width
+    # a path in the spatial plane is defined as a list of tuples (sign, direction, x, y)
+    # R=7
+    # spatial_path = [(1, 1, i, 1) for i in 1:R]
+    # spatial_path = [(1, 1, 1, 1), (1, 2, 2, 1), (1, 1, 2, 2), (-1, 2, 3, 1), (1, 1, 3, 1)]
+    α = 0.7 # smearing param
+    ϕ_ape_smeared = ape_smearing_3d(ϕ, α)
+    ϕ_t = thermally_average_3d(ϕ, J)
+    (D, Lx, Ly, Lz) = size(ϕ)
+    if D != 3
+        @warn "Only supports 3D lattices" d
+        return 0
+    end
+
+    plane_basis = [(1, 0), (0, 1)]
+    #could move this calculation elsewhere and make it a parameter
+    endpoint =
+        if spatial_path[end][1] == 1
+            spatial_path[end][3:4] .+ spatial_path[end][1] .* plane_basis[spatial_path[end][2]]
+        else
+            spatial_path[end][3:4]
+        end
+
+    loops = zeros(Float64, Lz)
+    for k1 in 1:Lz
+        k2 = mod1(k1 + τ, Lz)
+        #top and bottom planes where the loops move along spatially
+        p1 = ϕ_ape_smeared[1:2, :, :, k1]
+        p2 = ϕ_ape_smeared[1:2, :, :, k2]
+        temporal_inds = mod1(k1 + 1, Lz):mod1(k2 - 2, Lz)
+        # a 2x2x1 array such that temporal_lines[x,y] gives the sum of links along the z from z=i1 to z=i2-1
+        temporal_lines = ϕ[3, :, :, k1] .+ sum(ϕ_t[3, :, :, temporal_inds], dims=3) .+ ϕ[3, :, :, mod1(k2 - 1, Lz)]
+
+        p1_along_path = sum(r[1] * sa.circshift(p1[r[2], :, :], ((1, 1) .- r[3:4])) for r in spatial_path)
+
+        # subtract because we are going backwards along the path
+        p2_along_path = sum(r[1] * sa.circshift(p2[r[2], :, :], ((1, 1) .- r[3:4])) for r in spatial_path)
+
+        loop = p1_along_path + circshift(temporal_lines, ((1, 1) .- endpoint)) - p2_along_path - temporal_lines
+        loops[k1] = mean(cos.(loop))
+    end
+    mean(loops)
+end
+
+function ape_smearing_3d(ϕ, α)
+    # maybe change to specify a plane instead of smearing all of them
+    # Assumes the temporal direction is in e3 = [0,0,1]
+    ϕ_smeared = similar(ϕ)
+    ϕ_smeared[1, :, :, :] = mod2pi.(α * ϕ[1, :, :, :] + ((1 - α) / 2) * (
+        sa.circshift(ϕ[2, :, :, :], -[0, -1, 0]) +
+        sa.circshift(ϕ[2, :, :, :], -[1, 0, 0]) -
+        ϕ[2, :, :, :] -
+        sa.circshift(ϕ[2, :, :, :], -[1, -1, 0]) -
+        sa.circshift(ϕ[1, :, :, :], -[0, 1, 0]) -
+        sa.circshift(ϕ[1, :, :, :], -[0, -1, 0])
+    )) .- pi
+
+    ϕ_smeared[2, :, :, :] = mod2pi.(α * ϕ[2, :, :, :] + ((1 - α) / 2) * (
+        sa.circshift(ϕ[1, :, :, :], -[0, 1, 0]) +
+        sa.circshift(ϕ[1, :, :, :], -[-1, 0, 0]) -
+        ϕ[1, :, :, :] -
+        sa.circshift(ϕ[1, :, :, :], -[-1, 1, 0]) -
+        sa.circshift(ϕ[2, :, :, :], -[1, 0, 0]) -
+        sa.circshift(ϕ[2, :, :, :], -[-1, 0, 0])
+    )) .- pi
+    ϕ_smeared[3, :, :, :] = copy(ϕ[3, :, :, :])
+    return ϕ_smeared
+end
+
+function thermally_average_3d(ϕ, J)
+    # Thermally averages the temporal direction (assumed e3) of ϕ
+    ϕ_t = copy(ϕ)
+
+    # ϕ_t[3,:,:,:] = sf.besseli(1,J*R)/sf.besseli(0,J*R)*cos(r)
+    ϕ_t
+end
+
+function n_ape_smearing_3d(ϕ, α, n)
+    ϕ_smeared = copy(ϕ)
+    for _ in 1:n
+        ϕ_smeared = ape_smearing_3d(ϕ_smeared, α)
+    end
+    return ϕ_smeared
 end
 
 function sum_lattice3d(ϕ, s1, s2, s3)
@@ -273,4 +362,4 @@ lf_steps = Int(round(1 / Δτ))
 β = 1
 Δτ = 0.115
 lf_steps = Int(round(1 / Δτ))
-measure("wilson_loop1.txt", "w", zeros(Float64, (3, 16, 16, 16)), 250, 10, 2, HMC.hmc_run, (Action.S_SAshift_3d, Action.dSdϕ_SAshift_3d, lf_steps, Δτ, (β,)), (range_loop3d,), ((1:8, 1:8,),), (β, 16))
+# measure("wilson_loop1.txt", "w", zeros(Float64, (3, 16, 16, 16)), 250, 10, 2, HMC.hmc_run, (Action.S_SAshift_3d, Action.dSdϕ_SAshift_3d, lf_steps, Δτ, (β,)), (range_loop3d,), ((1:8, 1:8,),), (β, 16))

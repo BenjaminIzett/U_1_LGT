@@ -75,7 +75,7 @@ function plt_hot_cold_plaquette_v_trajectory(filename_hot, filename_cold)
 end
 
 
-# check_hamer("analysis/test_a.txt", false) |> display
+check_hamer("analysis/test_a.txt", false) |> display
 # check_hamer("analysis/test_full.txt", true) |> display
 # plot_autocorrelation("analysis/autocorrelation_1_05_1000.txt") |> display
 # plot_autocorrelation("analysis/autocorrelation_1_05_100.txt") |> display
@@ -90,8 +90,8 @@ end
 # plot_autocorrelation("analysis/autocorrelation_1_05_10000.txt", 10) |> display
 # plot_autocorrelation_log("analysis/autocorrelation_1_05_10000.txt", 10) |> display
 
-plot_autocorrelation("analysis/mean/autocorrelation_mean.txt", 15; error_file="analysis/std/autocorrelation_mean.txt") |> display
-plot_autocorrelation_log("analysis/mean/autocorrelation_mean.txt", 15; error_file="analysis/std/autocorrelation_mean.txt") |> display
+# plot_autocorrelation("analysis/mean/autocorrelation_mean.txt", 15; error_file="analysis/std/autocorrelation_mean.txt") |> display
+# plot_autocorrelation_log("analysis/mean/autocorrelation_mean.txt", 15; error_file="analysis/std/autocorrelation_mean.txt") |> display
 
 
 # plt_hot_cold_plaquette_v_trajectory("measurements/plaquette_v_trajectory_hot.txt", "measurements/plaquette_v_trajectory_cold.txt")
