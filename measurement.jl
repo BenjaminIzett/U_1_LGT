@@ -69,37 +69,37 @@ const unit_vectors_3d = [I[1:3, k] for k in 1:3]
 #     loop
 # end
 
-function loop3d(ϕ, μ, ν, rμ, rν, n)
-    if μ == ν
-        return 0
-    end
-    size_μ = size(ϕ)[μ+1]
-    size_ν = size(ϕ)[ν+1]
+# function loop3d(ϕ, μ, ν, rμ, rν, n)
+#     if μ == ν
+#         return 0
+#     end
+#     size_μ = size(ϕ)[μ+1]
+#     size_ν = size(ϕ)[ν+1]
 
-    α = 6 - μ - ν # the index perp to loop
+#     α = 6 - μ - ν # the index perp to loop
 
-    μp_indices = mod1.(n[μ] .+ (0:rμ), size_μ)
-    νp_indices = mod1.(n[ν] .+ (0:rν), size_ν)
+#     μp_indices = mod1.(n[μ] .+ (0:rμ), size_μ)
+#     νp_indices = mod1.(n[ν] .+ (0:rν), size_ν)
 
 
-    #can reverse order in last two terms but since we are just adding it doesnt matter
+#     #can reverse order in last two terms but since we are just adding it doesnt matter
 
-    loop = sum(ϕ[μ, (unit_vectors_3d[α] * n[α] + unit_vectors_3d[μ] * ind + unit_vectors_3d[ν] * νp_indices[1])...] for ind in μp_indices[1:end-1]) +
-           sum(ϕ[ν, (unit_vectors_3d[α] * n[α] + unit_vectors_3d[μ] * μp_indices[end] + unit_vectors_3d[ν] * ind)...] for ind in νp_indices[1:end-1]) +
-           sum(-ϕ[μ, (unit_vectors_3d[α] * n[α] + unit_vectors_3d[μ] * ind + unit_vectors_3d[ν] * νp_indices[end])...] for ind in μp_indices[1:end-1]) +
-           sum(-ϕ[ν, (unit_vectors_3d[α] * n[α] + unit_vectors_3d[μ] * μp_indices[1] + unit_vectors_3d[ν] * ind)...] for ind in νp_indices[1:end-1])
-    cos(loop)
-end
+#     loop = sum(ϕ[μ, (unit_vectors_3d[α] * n[α] + unit_vectors_3d[μ] * ind + unit_vectors_3d[ν] * νp_indices[1])...] for ind in μp_indices[1:end-1]) +
+#            sum(ϕ[ν, (unit_vectors_3d[α] * n[α] + unit_vectors_3d[μ] * μp_indices[end] + unit_vectors_3d[ν] * ind)...] for ind in νp_indices[1:end-1]) +
+#            sum(-ϕ[μ, (unit_vectors_3d[α] * n[α] + unit_vectors_3d[μ] * ind + unit_vectors_3d[ν] * νp_indices[end])...] for ind in μp_indices[1:end-1]) +
+#            sum(-ϕ[ν, (unit_vectors_3d[α] * n[α] + unit_vectors_3d[μ] * μp_indices[1] + unit_vectors_3d[ν] * ind)...] for ind in νp_indices[1:end-1])
+#     cos(loop)
+# end
 
-function site_average_loop3d(ϕ, μ, ν, rμ, rν)
-    mean(loop3d(ϕ, μ, ν, rμ, rν, [nx, ny, nz]) for nx in 1:size(ϕ)[2] for ny in 1:size(ϕ)[3] for nz in 1:size(ϕ)[4])
-end
-function site_dir_average_loop3d(ϕ, rμ, rν)
-    mean(site_average_loop3d(ϕ, μ, ν, rμ, rν) for (μ, ν) in [(1, 2), (1, 3), (2, 3)])
-end
-function range_loop3d(ϕ, rμ_range, rν_range)
-    collect((rμ, rν, site_dir_average_loop3d(ϕ, rμ, rν)) for rμ in rμ_range for rν in rν_range)
-end
+# function site_average_loop3d(ϕ, μ, ν, rμ, rν)
+#     mean(loop3d(ϕ, μ, ν, rμ, rν, [nx, ny, nz]) for nx in 1:size(ϕ)[2] for ny in 1:size(ϕ)[3] for nz in 1:size(ϕ)[4])
+# end
+# function site_dir_average_loop3d(ϕ, rμ, rν)
+#     mean(site_average_loop3d(ϕ, μ, ν, rμ, rν) for (μ, ν) in [(1, 2), (1, 3), (2, 3)])
+# end
+# function range_loop3d(ϕ, rμ_range, rν_range)
+#     collect((rμ, rν, site_dir_average_loop3d(ϕ, rμ, rν)) for rμ in rμ_range for rν in rν_range)
+# end
 
 function wilson_loop3d(ϕ, spatial_path, τ, J)
     # Assumes that the temporal direction is in the e_3 direction ie [0,0,1] basis vector
@@ -180,13 +180,13 @@ function thermally_average_3d(ϕ, J)
     ϕ_t
 end
 
-function n_ape_smearing_3d(ϕ, α, n)
-    ϕ_smeared = copy(ϕ)
-    for _ in 1:n
-        ϕ_smeared = ape_smearing_3d(ϕ_smeared, α)
-    end
-    return ϕ_smeared
-end
+# function n_ape_smearing_3d(ϕ, α, n)
+#     ϕ_smeared = copy(ϕ)
+#     for _ in 1:n
+#         ϕ_smeared = ape_smearing_3d(ϕ_smeared, α)
+#     end
+#     return ϕ_smeared
+# end
 
 function sum_lattice3d(ϕ, s1, s2, s3)
     #assumes s1, s2, s3 are multiples of lattice size
