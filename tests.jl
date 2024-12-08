@@ -1,6 +1,7 @@
 
 include("hmc.jl")
 include("action.jl")
+include("measurement.jl")
 
 import Plots
 using Symbolics
@@ -184,6 +185,29 @@ function test_expval(ϕ, S, dSdϕ, lf_steps, Δτ, S_args, HMC_steps, steps_skip
     exp_ΔH = mean(exp.(ΔHs[steps_skipped:end] * -1))
     std_exp_exp_ΔH = std(exp.(ΔHs[steps_skipped:end] * -1))
     acceptance_rate = sum(accepted) / length(accepted)
+    @info "Checking the mean value of the exponental of the ΔH" exp_ΔH std_exp_exp_ΔH lf_steps Δτ HMC_steps steps_skipped acceptance_rate meanΔHs
+end
+
+function fa_test_expval3d(ϕ, S, dSdϕ, lf_steps, Δτ, S_args, fa_M, HMC_steps, steps_skipped)
+    (D, Lx, Ly, Lz) = size(ϕ)
+    inverse_FK = HMC.inv_FK_3d(Lx, Ly, Lz, fa_M)
+    ΔHs = []
+    accepted = []
+    for k in 2:HMC_steps+1
+        ϕ, ΔH_k, accepted_k = HMC.fa_hmc_run_3d(ϕ, S, dSdϕ, inverse_FK, lf_steps, Δτ, S_args)
+        push!(ΔHs, ΔH_k)
+        push!(accepted, accepted_k)
+        if k % 100 == 0
+            display(k)
+        end
+    end
+
+    Plots.plot(ΔHs) |> display
+    meanΔHs = mean(ΔHs[steps_skipped:end])
+
+    exp_ΔH = mean(exp.(ΔHs[steps_skipped:end] * -1))
+    std_exp_exp_ΔH = std(exp.(ΔHs[steps_skipped:end] * -1))
+    acceptance_rate = sum(accepted) / length(accepted)
     @info "Checking the exponental of the mean value of ΔH" exp_ΔH std_exp_exp_ΔH lf_steps Δτ HMC_steps steps_skipped acceptance_rate meanΔHs
 end
 
@@ -323,7 +347,7 @@ function ΔHΔτ(ϕ, S, dSdϕ, S_args, hmc_runs, initial_steps)
     plot |> display
 end
 
-function random_gauge_transform(N, ϕ, S, S_args)
+function random_gauge_transform_action(N, ϕ, S, S_args)
     # assumes first dimension of ϕ is direction: e1,e2,e3
     if N == 3
         χ = (rand(Float64, size(ϕ)[2:end]) * 2 .- 1) * pi
@@ -335,6 +359,23 @@ function random_gauge_transform(N, ϕ, S, S_args)
         ϕ_n[2, :, :, :] += Δχ2
         ϕ_n[3, :, :, :] += Δχ3
         @info "Random Gauge Transformation" abs(S(ϕ, S_args...) - S(ϕ_n, S_args...))
+    else
+        display("Not implemented for N ≠ 3")
+    end
+end
+
+function random_gauge_transform_wilson_loop(N, ϕ, loop, loop_args)
+    # assumes first dimension of ϕ is direction: e1,e2,e3
+    if N == 3
+        χ = (rand(Float64, size(ϕ)[2:end]) * 2 .- 1) * pi
+        Δχ1 = ShiftedArrays.circshift(χ, -[1, 0, 0]) - χ
+        Δχ2 = ShiftedArrays.circshift(χ, -[0, 1, 0]) - χ
+        Δχ3 = ShiftedArrays.circshift(χ, -[0, 0, 1]) - χ
+        ϕ_n = copy(ϕ)
+        ϕ_n[1, :, :, :] += Δχ1
+        ϕ_n[2, :, :, :] += Δχ2
+        ϕ_n[3, :, :, :] += Δχ3
+        @info "Random Gauge Transformation" abs(loop(ϕ, loop_args...) - loop(ϕ_n, loop_args...))
     else
         display("Not implemented for N ≠ 3")
     end
@@ -353,7 +394,7 @@ function main()
 
 
     # test_expval(zeros((2, 10, 10)), Action.S_2d, Action.dSdϕ_SAshift_2d, 100, 0.05, (1,), 10000, 300)
-    test_expval(zeros((3, 16, 16, 16)), Action.S_SAshift_3d, Action.dSdϕ_SAshift_3d, 9, 0.115, (1,), 1000, 300)
+    # test_expval(zeros((3, 16, 16, 16)), Action.S_SAshift_3d, Action.dSdϕ_SAshift_3d, 5, 0.2, (1,), 1000, 300)
 
     # benchmarkS2d()
     # benchmarkS3d()
@@ -364,7 +405,11 @@ function main()
 
     # ΔHΔτ(zeros(3, 16, 16, 16), Action.S_SAshift_3d, Action.dSdϕ_SAshift_3d, (1,), 100, 100)
 
-    # random_gauge_transform(3, rand(Float64, (3, 32, 32, 32)), Action.S_3d, (1,))
+    # random_gauge_transform_action(3, rand(Float64, (3, 32, 32, 32)), Action.S_3d, (1,))
+    # random_gauge_transform_wilson_loop(3, rand(Float64, (3, 32, 32, 32)), site_average_loop3d, (1, 3, 8, 3))
+    # random_gauge_transform_wilson_loop(3, rand(Float64, (3, 32, 32, 32)), rect_wilson_loop_3d, (4, 7, 1, 0.7, 10))
+
+    # fa_test_expval3d(zeros((3, 16, 16, 16)), Action.S_SAshift_3d, Action.dSdϕ_SAshift_3d, 2, 0.5, (1,), 0.1, 2000, 300)
 end
 
 main()

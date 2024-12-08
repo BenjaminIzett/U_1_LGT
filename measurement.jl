@@ -50,50 +50,54 @@ function mean_plaquette2d(ϕ, J)
 end
 
 const unit_vectors_3d = [I[1:3, k] for k in 1:3]
-# function loop3d_old(ϕ, μ, ν, rμ, rν, n)
-#     if μ == ν
-#         return 0
-#     end
+function loop3d_old(ϕ, μ, ν, rμ, rν, n)
+    if μ == ν
+        return 0
+    end
 
-#     #can use mod1 to wrap indices
+    #can use mod1 to wrap indices
 
-#     μp_indices = [n + unit_vectors_3d[μ] * r for r in 0:rμ-1]
-#     μn_indices = [n + unit_vectors_3d[ν] * (rν - 1) + unit_vectors_3d[μ] * r for r in (rμ-1):-1:0]
-#     νp_indices = [n + unit_vectors_3d[μ] * (rμ - 1) + unit_vectors_3d[ν] * r for r in 0:rν-1]
-#     νn_indices = [n + unit_vectors_3d[ν] * r for r in rν-1:-1:0]
+    μp_indices = [n + unit_vectors_3d[μ] * r for r in 0:rμ-1]
+    μn_indices = [n + unit_vectors_3d[ν] * (rν - 1) + unit_vectors_3d[μ] * r for r in (rμ-1):-1:0]
+    νp_indices = [n + unit_vectors_3d[μ] * (rμ - 1) + unit_vectors_3d[ν] * r for r in 0:rν-1]
+    νn_indices = [n + unit_vectors_3d[ν] * r for r in rν-1:-1:0]
 
-#     loop = sum(ϕ[μ, ind...] for ind in μp_indices) +
-#            sum(ϕ[ν, ind...] for ind in νp_indices) +
-#            sum(-ϕ[μ, ind...] for ind in μn_indices) +
-#            sum(-ϕ[ν, ind...] for ind in νn_indices)
-#     loop
-# end
+    loop = sum(ϕ[μ, ind...] for ind in μp_indices) +
+           sum(ϕ[ν, ind...] for ind in νp_indices) +
+           sum(-ϕ[μ, ind...] for ind in μn_indices) +
+           sum(-ϕ[ν, ind...] for ind in νn_indices)
+    loop
+end
 
-# function loop3d(ϕ, μ, ν, rμ, rν, n)
-#     if μ == ν
-#         return 0
-#     end
-#     size_μ = size(ϕ)[μ+1]
-#     size_ν = size(ϕ)[ν+1]
+function loop3d(ϕ, μ, ν, rμ, rν, n)
+    if μ == ν
+        return 0
+    end
+    size_μ = size(ϕ)[μ+1]
+    size_ν = size(ϕ)[ν+1]
 
-#     α = 6 - μ - ν # the index perp to loop
+    α = 6 - μ - ν # the index perp to loop
 
-#     μp_indices = mod1.(n[μ] .+ (0:rμ), size_μ)
-#     νp_indices = mod1.(n[ν] .+ (0:rν), size_ν)
+    μp_indices = mod1.(n[μ] .+ (0:rμ), size_μ)
+    νp_indices = mod1.(n[ν] .+ (0:rν), size_ν)
 
 
-#     #can reverse order in last two terms but since we are just adding it doesnt matter
+    #can reverse order in last two terms but since we are just adding it doesnt matter
 
-#     loop = sum(ϕ[μ, (unit_vectors_3d[α] * n[α] + unit_vectors_3d[μ] * ind + unit_vectors_3d[ν] * νp_indices[1])...] for ind in μp_indices[1:end-1]) +
-#            sum(ϕ[ν, (unit_vectors_3d[α] * n[α] + unit_vectors_3d[μ] * μp_indices[end] + unit_vectors_3d[ν] * ind)...] for ind in νp_indices[1:end-1]) +
-#            sum(-ϕ[μ, (unit_vectors_3d[α] * n[α] + unit_vectors_3d[μ] * ind + unit_vectors_3d[ν] * νp_indices[end])...] for ind in μp_indices[1:end-1]) +
-#            sum(-ϕ[ν, (unit_vectors_3d[α] * n[α] + unit_vectors_3d[μ] * μp_indices[1] + unit_vectors_3d[ν] * ind)...] for ind in νp_indices[1:end-1])
-#     cos(loop)
-# end
+    loop = sum(ϕ[μ, (unit_vectors_3d[α] * n[α] + unit_vectors_3d[μ] * ind + unit_vectors_3d[ν] * νp_indices[1])...] for ind in μp_indices[1:end-1]) +
+           sum(ϕ[ν, (unit_vectors_3d[α] * n[α] + unit_vectors_3d[μ] * μp_indices[end] + unit_vectors_3d[ν] * ind)...] for ind in νp_indices[1:end-1]) +
+           sum(-ϕ[μ, (unit_vectors_3d[α] * n[α] + unit_vectors_3d[μ] * ind + unit_vectors_3d[ν] * νp_indices[end])...] for ind in μp_indices[1:end-1]) +
+           sum(-ϕ[ν, (unit_vectors_3d[α] * n[α] + unit_vectors_3d[μ] * μp_indices[1] + unit_vectors_3d[ν] * ind)...] for ind in νp_indices[1:end-1])
+    exp(complex(0, loop))
+end
 
-# function site_average_loop3d(ϕ, μ, ν, rμ, rν)
-#     mean(loop3d(ϕ, μ, ν, rμ, rν, [nx, ny, nz]) for nx in 1:size(ϕ)[2] for ny in 1:size(ϕ)[3] for nz in 1:size(ϕ)[4])
-# end
+function site_average_loop3d(ϕ, μ, ν, rμ, rν)
+    mean(loop3d(ϕ, μ, ν, rμ, rν, [nx, ny, nz]) for nx in 1:size(ϕ)[2] for ny in 1:size(ϕ)[3] for nz in 1:size(ϕ)[4])
+end
+
+function Rτ_loop_3d(ϕ, R, τ)
+    mean([site_average_loop3d(ϕ, 1, 3, R, τ), site_average_loop3d(ϕ, 2, 3, R, τ)])
+end
 # function site_dir_average_loop3d(ϕ, rμ, rν)
 #     mean(site_average_loop3d(ϕ, μ, ν, rμ, rν) for (μ, ν) in [(1, 2), (1, 3), (2, 3)])
 # end
@@ -101,16 +105,11 @@ const unit_vectors_3d = [I[1:3, k] for k in 1:3]
 #     collect((rμ, rν, site_dir_average_loop3d(ϕ, rμ, rν)) for rμ in rμ_range for rν in rν_range)
 # end
 
-function wilson_loop3d(ϕ, spatial_path, τ, J)
+function wilson_loop3d(ϕ, ϕ_ape_smeared, ϕ_t, spatial_path, τ)
     # Assumes that the temporal direction is in the e_3 direction ie [0,0,1] basis vector
     # τ should be <= half the temporal lattice width
     # a path in the spatial plane is defined as a list of tuples (sign, direction, x, y)
-    # R=7
-    # spatial_path = [(1, 1, i, 1) for i in 1:R]
-    # spatial_path = [(1, 1, 1, 1), (1, 2, 2, 1), (1, 1, 2, 2), (-1, 2, 3, 1), (1, 1, 3, 1)]
-    α = 0.7 # smearing param
-    ϕ_ape_smeared = ape_smearing_3d(ϕ, α)
-    ϕ_t = thermally_average_3d(ϕ, J)
+
     (D, Lx, Ly, Lz) = size(ϕ)
     if D != 3
         @warn "Only supports 3D lattices" d
@@ -126,58 +125,187 @@ function wilson_loop3d(ϕ, spatial_path, τ, J)
             spatial_path[end][3:4]
         end
 
-    loops = zeros(Float64, Lz)
+    loops = zeros(ComplexF64, Lz)
     for k1 in 1:Lz
         k2 = mod1(k1 + τ, Lz)
-        #top and bottom planes where the loops move along spatially
-        p1 = ϕ_ape_smeared[1:2, :, :, k1]
-        p2 = ϕ_ape_smeared[1:2, :, :, k2]
-        temporal_inds = mod1(k1 + 1, Lz):mod1(k2 - 2, Lz)
-        # a 2x2x1 array such that temporal_lines[x,y] gives the sum of links along the z from z=i1 to z=i2-1
-        temporal_lines = ϕ[3, :, :, k1] .+ sum(ϕ_t[3, :, :, temporal_inds], dims=3) .+ ϕ[3, :, :, mod1(k2 - 1, Lz)]
 
-        p1_along_path = sum(r[1] * sa.circshift(p1[r[2], :, :], ((1, 1) .- r[3:4])) for r in spatial_path)
+        #top and bottom planes where the loops move along spatially
+
+        p1 = ϕ_ape_smeared[:, :, :, k1]
+
+        p2 = ϕ_ape_smeared[:, :, :, k2]
+        # temporal_inds =
+        #     if mod1(k1 + 1, Lz) < mod1(k2 - 2, Lz)
+        #         mod1(k1 + 1, Lz):mod1(k2 - 2, Lz)
+        #     else
+        #         mod1(k1 + 1, Lz):-1:mod1(k2 - 2, Lz)
+        #     end
+
+        temporal_inds = mod1.(k1+1:k1+τ-2, Lz)
+
+        # temporal_inds = mod1(k1 + 1, Lz):mod1(k2 - 2, Lz)
+
+        # a 2x2x1 array such that temporal_lines[x,y] gives the sum of links along the z from z=i1 to z=i2-1
+        # only works for τ>2
+        temporal_lines =
+            if τ == 0
+                ones(ComplexF64, size(ϕ_t[:, :, 1]))
+            elseif τ == 1
+                exp.(complex.(0, ϕ[3, :, :, k1]))
+            elseif τ == 2
+                exp.(complex.(0, ϕ[3, :, :, k1])) .* exp.(complex.(0, ϕ[3, :, :, mod1(k2 - 1, Lz)]))
+            else
+                exp.(complex.(0, ϕ[3, :, :, k1])) .* prod(ϕ_t[:, :, temporal_inds], dims=3) .* exp.(complex.(0, ϕ[3, :, :, mod1(k2 - 1, Lz)]))
+
+            end
+
+        # temporal_lines = exp.(complex.(0, ϕ[3, :, :, k1])) .* prod(ϕ_t[:, :, temporal_inds], dims=3) .* exp.(complex.(0, ϕ[3, :, :, mod1(k2 - 1, Lz)]))
+
+        # p1_along_path = prod(r[1] * sa.circshift(p1[r[2], :, :], ((1, 1) .- r[3:4])) for r in spatial_path)
+        p1_paths = [r[1] == 1 ? sa.circshift(p1[r[2], :, :], ((1, 1) .- r[3:4])) : conj(sa.circshift(p1[r[2], :, :], ((1, 1) .- r[3:4]))) for r in spatial_path]
+        p1_along_path = reduce((F, t) -> F .* t, p1_paths)
 
         # subtract because we are going backwards along the path
-        p2_along_path = sum(r[1] * sa.circshift(p2[r[2], :, :], ((1, 1) .- r[3:4])) for r in spatial_path)
+        # p2_along_path = prod(r[1] * sa.circshift(p2[r[2], :, :], ((1, 1) .- r[3:4])) for r in spatial_path)
+        p2_paths = [r[1] == -1 ? sa.circshift(p2[r[2], :, :], ((1, 1) .- r[3:4])) : conj(sa.circshift(p2[r[2], :, :], ((1, 1) .- r[3:4]))) for r in spatial_path]
+        p2_along_reversed_path = reduce((F, t) -> F .* t, p2_paths)
 
-        loop = p1_along_path + circshift(temporal_lines, ((1, 1) .- endpoint)) - p2_along_path - temporal_lines
-        loops[k1] = mean(cos.(loop))
+        loops_k1 = p1_along_path .* circshift(temporal_lines, ((1, 1) .- endpoint)) .* p2_along_reversed_path .* conj(temporal_lines)
+
+        loops[k1] = mean(loops_k1)
     end
     mean(loops)
 end
 
-function ape_smearing_3d(ϕ, α)
-    # maybe change to specify a plane instead of smearing all of them
-    # Assumes the temporal direction is in e3 = [0,0,1]
-    ϕ_smeared = similar(ϕ)
-    ϕ_smeared[1, :, :, :] = mod2pi.(α * ϕ[1, :, :, :] + ((1 - α) / 2) * (
-        sa.circshift(ϕ[2, :, :, :], -[0, -1, 0]) +
-        sa.circshift(ϕ[2, :, :, :], -[1, 0, 0]) -
-        ϕ[2, :, :, :] -
-        sa.circshift(ϕ[2, :, :, :], -[1, -1, 0]) -
-        sa.circshift(ϕ[1, :, :, :], -[0, 1, 0]) -
-        sa.circshift(ϕ[1, :, :, :], -[0, -1, 0])
-    )) .- pi
+function rect_wilson_loop_3d(ϕ, R, τ, J, α, N_smears)
+    # α = 0.7
+    ϕ_ape_smeared = N_ape_smearing_3d(exp.(complex.(0, ϕ[1:2, :, :, :])), α, N_smears)
+    # ϕ_t = thermally_average_3d(ϕ, J)
+    # ϕ_ape_smeared = exp.(im * ϕ[1:2, :, :, :])
+    ϕ_t = exp.(im * ϕ[3, :, :, :])
+    x_path = [(1, 1, i, 1) for i in 1:R]
+    y_path = [(1, 2, 1, i) for i in 1:R]
+    x_loops = wilson_loop3d(ϕ, ϕ_ape_smeared, ϕ_t, x_path, τ)
+    y_loops = wilson_loop3d(ϕ, ϕ_ape_smeared, ϕ_t, y_path, τ)
+    return real(mean([x_loops, y_loops]))
+end
 
-    ϕ_smeared[2, :, :, :] = mod2pi.(α * ϕ[2, :, :, :] + ((1 - α) / 2) * (
-        sa.circshift(ϕ[1, :, :, :], -[0, 1, 0]) +
-        sa.circshift(ϕ[1, :, :, :], -[-1, 0, 0]) -
-        ϕ[1, :, :, :] -
-        sa.circshift(ϕ[1, :, :, :], -[-1, 1, 0]) -
-        sa.circshift(ϕ[2, :, :, :], -[1, 0, 0]) -
-        sa.circshift(ϕ[2, :, :, :], -[-1, 0, 0])
-    )) .- pi
-    ϕ_smeared[3, :, :, :] = copy(ϕ[3, :, :, :])
+
+# function ape_smearing_3d(ϕ, α)
+#     # maybe change to specify a plane instead of smearing all of them
+#     # Assumes the temporal direction is in e3 = [0, 0, 1]
+#     ϕ_smeared = zeros(ComplexF64, (2, size(ϕ)[2:end]...))
+
+#     ϕ_smeared[1, :, :, :] = α * exp.(complex.(0, ϕ[1, :, :, :])) + ((1 - α) / 2) * (
+#         exp.(im * sa.circshift(ϕ[2, :, :, :], -[1, 0, 0])) .*
+#         exp.(-im * sa.circshift(ϕ[1, :, :, :], -[0, 1, 0])) .*
+#         exp.(-im * ϕ[2, :, :, :]) +
+#         exp.(-im * sa.circshift(ϕ[2, :, :, :], -[1, -1, 0])) .*
+#         exp.(-im * sa.circshift(ϕ[1, :, :, :], -[0, -1, 0])) .*
+#         exp.(im * sa.circshift(ϕ[2, :, :, :], -[0, -1, 0]))
+#     )
+#     ϕ_smeared[2, :, :, :] = α * exp.(complex.(0, ϕ[2, :, :, :])) + ((1 - α) / 2) * (
+#         exp.(complex.(0, sa.circshift(ϕ[1, :, :, :], -[0, 1, 0]))) .*
+#         exp.(complex.(0, -sa.circshift(ϕ[2, :, :, :], -[1, 0, 0]))) .*
+#         exp.(complex.(0, -ϕ[1, :, :, :])) +
+#         exp.(complex.(0, -sa.circshift(ϕ[1, :, :, :], -[-1, 1, 0]))) .*
+#         exp.(complex.(0, -sa.circshift(ϕ[2, :, :, :], -[-1, 0, 0]))) .*
+#         exp.(complex.(0, sa.circshift(ϕ[1, :, :, :], -[-1, 0, 0])))
+#     )
+
+#     # Project onto group element
+#     # Maybe check that elements are non zero
+#     ϕ_smeared = ϕ_smeared ./ abs.(ϕ_smeared)
+#     return ϕ_smeared
+# end
+function ape_smearing_3d(exp_iϕ, α)
+    # maybe change to specify a plane instead of smearing all of them
+    # Assumes the temporal direction is in e3 = [0, 0, 1]
+    ϕ_smeared = zeros(ComplexF64, (2, size(exp_iϕ)[2:end]...))
+
+    ϕ_smeared[1, :, :, :] = α * exp_iϕ[1, :, :, :] + ((1 - α) / 2) * (
+        # sa.circshift(exp_iϕ[2, :, :, :], -[1, 0, 0]) .*
+        # conj(sa.circshift(exp_iϕ[1, :, :, :], -[0, 1, 0])) .*
+        # conj(exp_iϕ[2, :, :, :]) +
+        # conj(sa.circshift(exp_iϕ[2, :, :, :], -[1, -1, 0])) .*
+        # conj(sa.circshift(exp_iϕ[1, :, :, :], -[0, -1, 0])) .*
+        # sa.circshift(exp_iϕ[2, :, :, :], -[0, -1, 0])
+        exp_iϕ[2, :, :, :] .*
+        sa.circshift(exp_iϕ[1, :, :, :], -[0, 1, 0]) .*
+        conj(sa.circshift(exp_iϕ[2, :, :, :], -[1, 0, 0])) +
+        conj(sa.circshift(exp_iϕ[2, :, :, :], -[0, -1, 0])) .*
+        sa.circshift(exp_iϕ[1, :, :, :], -[0, -1, 0]) .*
+        sa.circshift(exp_iϕ[2, :, :, :], -[1, -1, 0])
+    )
+    ϕ_smeared[2, :, :, :] = α * exp_iϕ[2, :, :, :] + ((1 - α) / 2) * (
+        # sa.circshift(exp_iϕ[1, :, :, :], -[0, 1, 0]) .*
+        # conj(sa.circshift(exp_iϕ[2, :, :, :], -[1, 0, 0])) .*
+        # conj(exp_iϕ[1, :, :, :]) +
+        # conj(sa.circshift(exp_iϕ[1, :, :, :], -[-1, 1, 0])) .*
+        # conj(sa.circshift(exp_iϕ[2, :, :, :], -[-1, 0, 0])) .*
+        # sa.circshift(exp_iϕ[1, :, :, :], -[-1, 0, 0])
+        exp_iϕ[1, :, :, :] .*
+        sa.circshift(exp_iϕ[2, :, :, :], -[1, 0, 0]) .*
+        conj(sa.circshift(exp_iϕ[1, :, :, :], -[0, 1, 0])) +
+        conj(sa.circshift(exp_iϕ[1, :, :, :], -[-1, 0, 0])) .*
+        sa.circshift(exp_iϕ[2, :, :, :], -[-1, 0, 0]) .*
+        sa.circshift(exp_iϕ[1, :, :, :], -[-1, 1, 0])
+    )
+
+    # Project onto group element
+    # Maybe check that elements are non zero
+    ϕ_smeared = ϕ_smeared ./ abs.(ϕ_smeared)
     return ϕ_smeared
 end
 
-function thermally_average_3d(ϕ, J)
-    # Thermally averages the temporal direction (assumed e3) of ϕ
-    ϕ_t = copy(ϕ)
+function N_ape_smearing_3d(exp_iϕ, α, N)
+    for _ in 1:N
+        exp_iϕ = ape_smearing_3d(exp_iϕ, α)
+    end
+    return exp_iϕ
+end
 
-    # ϕ_t[3,:,:,:] = sf.besseli(1,J*R)/sf.besseli(0,J*R)*cos(r)
-    ϕ_t
+function cos_2_sum_as_cos(A_1, A_2, θ_1, θ_2)
+    # Expresses A_1*cos(x-θ_1)+A_2*cos(x-θ_2) as R*cos(x-θ)
+    # Returns (R,θ)
+    R = sqrt(A_1^2 + A_2^2 + 2 * A_1 * A_2 * cos(θ_1 - θ_2))
+    θ = atan(A_1 * sin(θ_1) + A_2 * sin(θ_2), A_1 * cos(θ_1) + A_2 * cos(θ_2))
+    return (R, θ)
+end
+function cos_4_sum_as_cos(A_1, A_2, A_3, A_4, θ_1, θ_2, θ_3, θ_4)
+    (R_12, θ_12) = cos_2_sum_as_cos(A_1, A_2, θ_1, θ_2)
+    (R_34, θ_34) = cos_2_sum_as_cos(A_3, A_4, θ_3, θ_4)
+    (R, θ) = cos_2_sum_as_cos(R_12, R_34, θ_12, θ_34)
+    return (R, θ)
+end
+function thermally_average_3d(ϕ, β)
+    # Thermally averages the temporal direction (assumed e3) of ϕ
+
+    # No averaging:
+    # return exp.(complex.(0, ϕ[3, :, :, :]))
+
+    θ_1 = sa.circshift(ϕ[1, :, :, :], -[0, 0, 1]) -
+          sa.circshift(ϕ[3, :, :, :], -[1, 0, 0]) -
+          ϕ[1, :, :, :]
+    θ_2 = sa.circshift(ϕ[2, :, :, :], -[0, 0, 1]) -
+          sa.circshift(ϕ[3, :, :, :], -[0, 1, 0]) -
+          ϕ[2, :, :, :]
+    θ_3 = sa.circshift(ϕ[1, :, :, :], -[-1, 0, 0]) -
+          sa.circshift(ϕ[3, :, :, :], -[-1, 0, 0]) -
+          sa.circshift(ϕ[1, :, :, :], -[-1, 0, 1])
+    θ_4 = sa.circshift(ϕ[2, :, :, :], -[0, -1, 0]) -
+          sa.circshift(ϕ[3, :, :, :], -[0, -1, 0]) -
+          sa.circshift(ϕ[2, :, :, :], -[0, -1, 1])
+
+    X_l = exp.(complex.(0, θ_1)) + exp.(complex.(0, θ_2)) + exp.(complex.(0, θ_3)) + exp.(complex.(0, θ_4))
+    d = abs.(X_l)
+
+    ϕ_t = (conj(X_l) .* sf.besseli.(1, β * d)) ./ (d .* sf.besseli.(0, β * d))
+    # R_θ = cos_4_sum_as_cos.(1, 1, 1, 1, -θ_1, -θ_2, -θ_3, -θ_4)
+
+    # ϕ_t = map(R_θ_i -> sf.besseli(1, β * R_θ_i[1]) * exp(complex(0, R_θ_i[2])) / sf.besseli(0, β * R_θ_i[1]), R_θ)
+
+    return ϕ_t
 end
 
 # function n_ape_smearing_3d(ϕ, α, n)
@@ -239,7 +367,7 @@ function acceptance_rate(ϕ, update, update_args, steps, initial_steps)
 
         accept_count += accepted
     end
-    accept_count / steps
+    display(accept_count / steps)
 end
 
 
@@ -264,7 +392,8 @@ function measure(filename, mode, ϕ_init, initial_steps, measurement_interval, N
 
             measurement = map((f, args) -> f(ϕ, args...), measurement_functions, measurement_args)
             # display(measurement)
-            writedlm(io, [measurement_info... Iterators.flatten(measurement...)...])
+            # writedlm(io, [measurement_info... Iterators.flatten(measurement...)...])
+            writedlm(io, transpose([measurement_info..., measurement...]))
         end
     end
     accept_rate = accept_count / (Nmeasurements * measurement_interval)
@@ -341,10 +470,10 @@ end
 # 0.9343
 
 
-β = 1
-Δτ = 0.115
+β = 2
+Δτ = 0.08
 lf_steps = Int(round(1 / Δτ))
-# acceptance_rate(zeros(Float64, (3, 16, 16, 16)), HMC.hmc_run, (Action.S_SAshift_3d, Action.dSdϕ_SAshift_3d, lf_steps, Δτ, (β,)), 200, 100)
+# display(acceptance_rate(zeros(Float64, (3, 16, 16, 16)), HMC.hmc_run, (Action.S_SAshift_3d, Action.dSdϕ_SAshift_3d, lf_steps, Δτ, (β,)), 200, 100))
 # measure("plaquette_v_trajectory_cold.txt", "w", zeros(Float64, (3, 16, 16, 16)), 0, 1, 150, HMC.hmc_run, (Action.S_SAshift_3d, Action.dSdϕ_SAshift_3d, lf_steps, Δτ, (β,)), (mean_plaquette3d,), ((β,),), (β, 16))
 β = 1
 Δτ = 0.05
@@ -363,3 +492,48 @@ lf_steps = Int(round(1 / Δτ))
 Δτ = 0.115
 lf_steps = Int(round(1 / Δτ))
 # measure("wilson_loop1.txt", "w", zeros(Float64, (3, 16, 16, 16)), 250, 10, 2, HMC.hmc_run, (Action.S_SAshift_3d, Action.dSdϕ_SAshift_3d, lf_steps, Δτ, (β,)), (range_loop3d,), ((1:8, 1:8,),), (β, 16))
+
+β = 2
+R = 5
+Δτ = 0.08
+lf_steps = Int(round(1 / Δτ))
+# for _ in 1:10
+#     measure("wilson_loop_run_B2_R5_ot_1000_10_real.txt", "a", zeros(Float64, (3, 16, 16, 16)), 250, 10, 1000, HMC.hmc_run, (Action.S_SAshift_3d, Action.dSdϕ_SAshift_3d, lf_steps, Δτ, (β,)), (rect_wilson_loop_3d, rect_wilson_loop_3d, rect_wilson_loop_3d, rect_wilson_loop_3d, rect_wilson_loop_3d, rect_wilson_loop_3d, rect_wilson_loop_3d, rect_wilson_loop_3d), ((R, 1, β, 0.7, 10), (R, 2, β, 0.7, 10), (R, 3, β, 0.7, 10), (R, 4, β, 0.7, 10), (R, 5, β, 0.7, 10), (R, 6, β, 0.7, 10), (R, 7, β, 0.7, 10), (R, 8, β, 0.7, 10)), (β, 16))
+# end
+
+β = 2
+Δτ = 0.08
+lf_steps = Int(round(1 / Δτ))
+measurement_functions = (rect_wilson_loop_3d for R in 1:10 for τ in 1:10)
+measurement_function_arguments = ((R, τ, β, 0.7, 10) for R in 1:10 for τ in 1:10)
+for _ in 1:10
+    measure("wilson_loop_run_long_thermal_range_ot_110_1500_10_real.txt", "a", zeros(Float64, (3, 16, 16, 16)), 1000, 10, 1500, HMC.hmc_run, (Action.S_SAshift_3d, Action.dSdϕ_SAshift_3d, lf_steps, Δτ, (β,)), measurement_functions, measurement_function_arguments, (β, 16))
+end
+
+
+# β = 2
+# Δτ = 0.05
+# lf_steps = Int(round(1 / Δτ))
+# measurement_functions = (rect_wilson_loop_3d for R in 2:10 for τ in 2:10)
+# measurement_function_arguments = ((R, τ, β, 0.7, 10) for R in 2:10 for τ in 2:10)
+# for _ in 1:10
+#     measure("wilson_loop32_run_range_no_1000_10_real.txt", "a", zeros(Float64, (3, 16, 16, 16)), 250, 10, 1000, HMC.hmc_run, (Action.S_SAshift_3d, Action.dSdϕ_SAshift_3d, lf_steps, Δτ, (β,)), measurement_functions, measurement_function_arguments, (β, 16))
+# end
+
+# acceptance_rate(zeros(Float64,(3,32,32,32)), HMC.hmc_run, (Action.S_SAshift_3d, Action.dSdϕ_SAshift_3d, lf_steps, Δτ, (β,)), 500, 250)
+
+# β = 3
+Δτ = 0.125
+lf_steps = Int(round(1 / Δτ))
+inverse_FK = HMC.inv_FK_3d(16, 16, 16, 0.1)
+# acceptance_rate(zeros(Float64, (3, 16, 16, 16)), HMC.fa_hmc_run_3d, (Action.S_SAshift_3d, Action.dSdϕ_SAshift_3d, inverse_FK, lf_steps, Δτ, (β,)), 500, 250)
+
+dataβ = [1.0, 1.35, 1.41, 1.55, 1.70, 1.90, 2.0, 2.25, 2.5, 2.75, 3.0]
+# dataβ_full = [0.2, 0.4, 0.6, 0.8, 1.0, 1.35, 1.41, 1.55, 1.70, 1.90, 2.0, 2.25, 2.5, 2.75, 3.0, 3.2, 3.4, 3.6, 3.8, 4.0]
+
+# dataP = [0.475, 0.629, 0.656, 0.704, 0.748, 0.790, 0.806, 0.834, 0.854, 0.869, 0.881]
+
+
+# for β in dataβ
+#     measure("fa_hamer_p_2.txt", "a", zeros(Float64, (3, 16, 16, 16)), 250, 10, 100, HMC.fa_hmc_run_3d, (Action.S_SAshift_3d, Action.dSdϕ_SAshift_3d, inverse_FK, lf_steps, Δτ, (β,)), (mean_plaquette3d,), ((β,),), (β, 16))
+# end
