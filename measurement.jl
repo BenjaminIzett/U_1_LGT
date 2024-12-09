@@ -112,7 +112,7 @@ function wilson_loop3d(ϕ, ϕ_ape_smeared, ϕ_t, spatial_path, τ)
 
     (D, Lx, Ly, Lz) = size(ϕ)
     if D != 3
-        @warn "Only supports 3D lattices" d
+        @warn "Only supports 3D lattices" D
         return 0
     end
 
@@ -191,45 +191,12 @@ function rect_wilson_loop_3d(ϕ, R, τ, J, α, N_smears)
 end
 
 
-# function ape_smearing_3d(ϕ, α)
-#     # maybe change to specify a plane instead of smearing all of them
-#     # Assumes the temporal direction is in e3 = [0, 0, 1]
-#     ϕ_smeared = zeros(ComplexF64, (2, size(ϕ)[2:end]...))
-
-#     ϕ_smeared[1, :, :, :] = α * exp.(complex.(0, ϕ[1, :, :, :])) + ((1 - α) / 2) * (
-#         exp.(im * sa.circshift(ϕ[2, :, :, :], -[1, 0, 0])) .*
-#         exp.(-im * sa.circshift(ϕ[1, :, :, :], -[0, 1, 0])) .*
-#         exp.(-im * ϕ[2, :, :, :]) +
-#         exp.(-im * sa.circshift(ϕ[2, :, :, :], -[1, -1, 0])) .*
-#         exp.(-im * sa.circshift(ϕ[1, :, :, :], -[0, -1, 0])) .*
-#         exp.(im * sa.circshift(ϕ[2, :, :, :], -[0, -1, 0]))
-#     )
-#     ϕ_smeared[2, :, :, :] = α * exp.(complex.(0, ϕ[2, :, :, :])) + ((1 - α) / 2) * (
-#         exp.(complex.(0, sa.circshift(ϕ[1, :, :, :], -[0, 1, 0]))) .*
-#         exp.(complex.(0, -sa.circshift(ϕ[2, :, :, :], -[1, 0, 0]))) .*
-#         exp.(complex.(0, -ϕ[1, :, :, :])) +
-#         exp.(complex.(0, -sa.circshift(ϕ[1, :, :, :], -[-1, 1, 0]))) .*
-#         exp.(complex.(0, -sa.circshift(ϕ[2, :, :, :], -[-1, 0, 0]))) .*
-#         exp.(complex.(0, sa.circshift(ϕ[1, :, :, :], -[-1, 0, 0])))
-#     )
-
-#     # Project onto group element
-#     # Maybe check that elements are non zero
-#     ϕ_smeared = ϕ_smeared ./ abs.(ϕ_smeared)
-#     return ϕ_smeared
-# end
 function ape_smearing_3d(exp_iϕ, α)
     # maybe change to specify a plane instead of smearing all of them
     # Assumes the temporal direction is in e3 = [0, 0, 1]
     ϕ_smeared = zeros(ComplexF64, (2, size(exp_iϕ)[2:end]...))
 
     ϕ_smeared[1, :, :, :] = α * exp_iϕ[1, :, :, :] + ((1 - α) / 2) * (
-        # sa.circshift(exp_iϕ[2, :, :, :], -[1, 0, 0]) .*
-        # conj(sa.circshift(exp_iϕ[1, :, :, :], -[0, 1, 0])) .*
-        # conj(exp_iϕ[2, :, :, :]) +
-        # conj(sa.circshift(exp_iϕ[2, :, :, :], -[1, -1, 0])) .*
-        # conj(sa.circshift(exp_iϕ[1, :, :, :], -[0, -1, 0])) .*
-        # sa.circshift(exp_iϕ[2, :, :, :], -[0, -1, 0])
         exp_iϕ[2, :, :, :] .*
         sa.circshift(exp_iϕ[1, :, :, :], -[0, 1, 0]) .*
         conj(sa.circshift(exp_iϕ[2, :, :, :], -[1, 0, 0])) +
@@ -238,12 +205,6 @@ function ape_smearing_3d(exp_iϕ, α)
         sa.circshift(exp_iϕ[2, :, :, :], -[1, -1, 0])
     )
     ϕ_smeared[2, :, :, :] = α * exp_iϕ[2, :, :, :] + ((1 - α) / 2) * (
-        # sa.circshift(exp_iϕ[1, :, :, :], -[0, 1, 0]) .*
-        # conj(sa.circshift(exp_iϕ[2, :, :, :], -[1, 0, 0])) .*
-        # conj(exp_iϕ[1, :, :, :]) +
-        # conj(sa.circshift(exp_iϕ[1, :, :, :], -[-1, 1, 0])) .*
-        # conj(sa.circshift(exp_iϕ[2, :, :, :], -[-1, 0, 0])) .*
-        # sa.circshift(exp_iϕ[1, :, :, :], -[-1, 0, 0])
         exp_iϕ[1, :, :, :] .*
         sa.circshift(exp_iϕ[2, :, :, :], -[1, 0, 0]) .*
         conj(sa.circshift(exp_iϕ[1, :, :, :], -[0, 1, 0])) +
@@ -281,9 +242,6 @@ end
 function thermally_average_3d(ϕ, β)
     # Thermally averages the temporal direction (assumed e3) of ϕ
 
-    # No averaging:
-    # return exp.(complex.(0, ϕ[3, :, :, :]))
-
     θ_1 = sa.circshift(ϕ[1, :, :, :], -[0, 0, 1]) -
           sa.circshift(ϕ[3, :, :, :], -[1, 0, 0]) -
           ϕ[1, :, :, :]
@@ -306,6 +264,117 @@ function thermally_average_3d(ϕ, β)
     # ϕ_t = map(R_θ_i -> sf.besseli(1, β * R_θ_i[1]) * exp(complex(0, R_θ_i[2])) / sf.besseli(0, β * R_θ_i[1]), R_θ)
 
     return ϕ_t
+end
+
+function parisi_dir(ϕ, β, direction)
+    # Thermally averages in given direction
+    if direction == 1
+        θ_1 = sa.circshift(ϕ[2, :, :, :], -[1, 0, 0]) -
+              sa.circshift(ϕ[1, :, :, :], -[0, 1, 0]) -
+              ϕ[2, :, :, :]
+        θ_2 = sa.circshift(ϕ[3, :, :, :], -[1, 0, 0]) -
+              sa.circshift(ϕ[1, :, :, :], -[0, 0, 1]) -
+              ϕ[3, :, :, :]
+        θ_3 = sa.circshift(ϕ[2, :, :, :], -[0, -1, 0]) -
+              sa.circshift(ϕ[1, :, :, :], -[0, -1, 0]) -
+              sa.circshift(ϕ[2, :, :, :], -[1, -1, 0])
+        θ_4 = sa.circshift(ϕ[3, :, :, :], -[0, 0, -1]) -
+              sa.circshift(ϕ[1, :, :, :], -[0, 0, -1]) -
+              sa.circshift(ϕ[3, :, :, :], -[1, 0, -1])
+
+        X_l = exp.(complex.(0, θ_1)) + exp.(complex.(0, θ_2)) + exp.(complex.(0, θ_3)) + exp.(complex.(0, θ_4))
+        d = abs.(X_l)
+
+        ϕ_t = (conj(X_l) .* sf.besseli.(1, β * d)) ./ (d .* sf.besseli.(0, β * d))
+        return ϕ_t
+    elseif direction == 2
+        θ_1 = sa.circshift(ϕ[1, :, :, :], -[0, 1, 0]) -
+              sa.circshift(ϕ[2, :, :, :], -[1, 0, 0]) -
+              ϕ[1, :, :, :]
+        θ_2 = sa.circshift(ϕ[3, :, :, :], -[0, 1, 0]) -
+              sa.circshift(ϕ[2, :, :, :], -[0, 0, 1]) -
+              ϕ[3, :, :, :]
+        θ_3 = sa.circshift(ϕ[1, :, :, :], -[-1, 0, 0]) -
+              sa.circshift(ϕ[2, :, :, :], -[-1, 0, 0]) -
+              sa.circshift(ϕ[1, :, :, :], -[-1, 1, 0])
+        θ_4 = sa.circshift(ϕ[3, :, :, :], -[0, 0, -1]) -
+              sa.circshift(ϕ[2, :, :, :], -[0, 0, -1]) -
+              sa.circshift(ϕ[3, :, :, :], -[0, 1, -1])
+
+        X_l = exp.(complex.(0, θ_1)) + exp.(complex.(0, θ_2)) + exp.(complex.(0, θ_3)) + exp.(complex.(0, θ_4))
+        d = abs.(X_l)
+
+        ϕ_t = (conj(X_l) .* sf.besseli.(1, β * d)) ./ (d .* sf.besseli.(0, β * d))
+        return ϕ_t
+    elseif direction == 3
+        θ_1 = sa.circshift(ϕ[1, :, :, :], -[0, 0, 1]) -
+              sa.circshift(ϕ[3, :, :, :], -[1, 0, 0]) -
+              ϕ[1, :, :, :]
+        θ_2 = sa.circshift(ϕ[2, :, :, :], -[0, 0, 1]) -
+              sa.circshift(ϕ[3, :, :, :], -[0, 1, 0]) -
+              ϕ[2, :, :, :]
+        θ_3 = sa.circshift(ϕ[1, :, :, :], -[-1, 0, 0]) -
+              sa.circshift(ϕ[3, :, :, :], -[-1, 0, 0]) -
+              sa.circshift(ϕ[1, :, :, :], -[-1, 0, 1])
+        θ_4 = sa.circshift(ϕ[2, :, :, :], -[0, -1, 0]) -
+              sa.circshift(ϕ[3, :, :, :], -[0, -1, 0]) -
+              sa.circshift(ϕ[2, :, :, :], -[0, -1, 1])
+
+        X_l = exp.(complex.(0, θ_1)) + exp.(complex.(0, θ_2)) + exp.(complex.(0, θ_3)) + exp.(complex.(0, θ_4))
+        d = abs.(X_l)
+
+        ϕ_t = (conj(X_l) .* sf.besseli.(1, β * d)) ./ (d .* sf.besseli.(0, β * d))
+        # R_θ = cos_4_sum_as_cos.(1, 1, 1, 1, -θ_1, -θ_2, -θ_3, -θ_4)
+
+        # ϕ_t = map(R_θ_i -> sf.besseli(1, β * R_θ_i[1]) * exp(complex(0, R_θ_i[2])) / sf.besseli(0, β * R_θ_i[1]), R_θ)
+
+        return ϕ_t
+    else
+        @warn "Direction must be 1, 2, 3." direction
+        return 0
+    end
+end
+
+function parisi(ϕ, β)
+    U_t = zeros(ComplexF64, size(ϕ))
+    U_t[1, :, :, :] = parisi_dir(ϕ, β, 1)
+    U_t[2, :, :, :] = parisi_dir(ϕ, β, 2)
+    U_t[3, :, :, :] = parisi_dir(ϕ, β, 3)
+    return U_t
+end
+
+function parisi_3d_loops(ϕ, R, τ, β)
+    (D, Lx, Ly, Lz) = size(ϕ)
+    if D != 3
+        @warn "Only supports 3D lattices" D
+        return 0
+    end
+    if τ < 3 || R < 3
+        @warn "Only supports loops of size R > 2, τ > 2." R τ
+        return 0
+    end
+
+    U_t = parisi(ϕ, β)
+    U = exp.(complex.(0, ϕ))
+    # U_t = copy(U)
+    Ux = U[1, :, :, :]
+    Uy = U[2, :, :, :]
+    Uz = U[3, :, :, :]
+
+    Ux_t = U_t[1, :, :, :]
+    Uy_t = U_t[2, :, :, :]
+    Uz_t = U_t[3, :, :, :]
+    # return Ux, Uy, Uz, Ux_t, Uy_t, Uz_t
+    x_lines = Ux .* reduce((F, t) -> F .* t, [sa.circshift(Ux_t, -[r, 0, 0]) for r in 1:R-2]) .* sa.circshift(Ux, -[R - 1, 0, 0])
+    y_lines = Uy .* reduce((F, t) -> F .* t, [sa.circshift(Uy_t, -[0, r, 0]) for r in 1:R-2]) .* sa.circshift(Uy, -[0, R - 1, 0])
+    τ_lines = Uz .* reduce((F, t) -> F .* t, [sa.circshift(Uz_t, -[0, 0, T]) for T in 1:τ-2]) .* sa.circshift(Uz, -[0, 0, τ - 1])
+
+    x_loops = x_lines .* sa.circshift(τ_lines, -[R, 0, 0]) .* conj.(sa.circshift(x_lines, -[0, 0, τ])) .* conj.(τ_lines)
+
+    y_loops = y_lines .* sa.circshift(τ_lines, -[0, R, 0]) .* conj.(sa.circshift(y_lines, -[0, 0, τ])) .* conj.(τ_lines)
+
+    loops = mean(x_loops .+ y_loops) / 2
+    return real(loops)
 end
 
 # function n_ape_smearing_3d(ϕ, α, n)
@@ -408,8 +477,6 @@ end
 
 
 
-
-
 # dataβ = [1.0, 1.35, 1.41, 1.55, 1.70, 1.90, 2.0, 2.25, 2.5, 2.75, 3.0]
 # dataβ_full = [0.2, 0.4, 0.6, 0.8, 1.0, 1.35, 1.41, 1.55, 1.70, 1.90, 2.0, 2.25, 2.5, 2.75, 3.0, 3.2, 3.4, 3.6, 3.8, 4.0]
 
@@ -506,10 +573,18 @@ lf_steps = Int(round(1 / Δτ))
 lf_steps = Int(round(1 / Δτ))
 measurement_functions = (rect_wilson_loop_3d for R in 1:10 for τ in 1:10)
 measurement_function_arguments = ((R, τ, β, 0.7, 10) for R in 1:10 for τ in 1:10)
-for _ in 1:10
-    measure("wilson_loop_run_long_thermal_range_ot_110_1500_10_real.txt", "a", zeros(Float64, (3, 16, 16, 16)), 1000, 10, 1500, HMC.hmc_run, (Action.S_SAshift_3d, Action.dSdϕ_SAshift_3d, lf_steps, Δτ, (β,)), measurement_functions, measurement_function_arguments, (β, 16))
-end
+# for _ in 1:10
+#     measure("wilson_loop_run_long_thermal_range_ot_110_1500_10_real.txt", "a", zeros(Float64, (3, 16, 16, 16)), 1000, 10, 1500, HMC.hmc_run, (Action.S_SAshift_3d, Action.dSdϕ_SAshift_3d, lf_steps, Δτ, (β,)), measurement_functions, measurement_function_arguments, (β, 16))
+# end
 
+β = 2
+Δτ = 0.05
+lf_steps = Int(round(1 / Δτ))
+measurement_functions = (parisi_3d_loops for _ in 1:36)
+measurement_function_arguments = ((R, τ, β) for R in 3:10 for τ in R:10)
+for _ in 1:10
+    measure("wl_check_p_2_1000_1000.txt", "a", zeros(Float64, (3, 32, 32, 32)), 1000, 10, 1000, HMC.hmc_run, (Action.S_SAshift_3d, Action.dSdϕ_SAshift_3d, lf_steps, Δτ, (β,)), measurement_functions, measurement_function_arguments, (β, 32))
+end
 
 # β = 2
 # Δτ = 0.05
