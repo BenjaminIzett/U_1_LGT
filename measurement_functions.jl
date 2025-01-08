@@ -18,7 +18,8 @@ function hamer_loop_range_3d(ϕ, β, α, N_smears, R_τ_pairs)
     ϕ_ape_smeared = WilsonLoops.N_ape_smearing_3d(exp.(complex.(0, ϕ[1:2, :, :, :])), α, N_smears)
     U_t = WilsonLoops.parisi_dir_3d(ϕ, β, 3)
 
-    [WilsonLoops.hamer_loop_3d(ϕ_ape_smeared, U_t, R, τ, β, α, N_smears) for (R, τ) in R_τ_pairs]
+
+    [WilsonLoops.hamer_loop_3d(ϕ,ϕ_ape_smeared, U_t, R, τ, β, α, N_smears) for (R, τ) in R_τ_pairs]
 end
 
 function parisi_loop_range_3d(ϕ, β, R_τ_pairs)
