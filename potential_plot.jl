@@ -71,7 +71,7 @@ function loop_ratio(data, R_values, τ_values, R)
     display(Vs[:, :, R])
     V_stds = std(ln_ratio, dims=(1,))
 
-    loop_plot = scatter(R_values[1:end-1], -Vs[1, :, R], yerror=V_stds[1, :, R], markershape=:x, ylims=(-0.5, 0.5), yticks=-0.4:0.2:0.4)
+    loop_plot = scatter(R_values[1:end-1], -Vs[1, :, R], yerror=V_stds[1, :, R], markershape=:x)
     hline!(loop_plot, [mean(-Vs[1, 1:end, R])])
     display(mean(-Vs[1, 1:end, R]))
 

@@ -1,6 +1,6 @@
 
 include("hmc.jl")
-include("action.jl")
+include("u_1_lgt.jl")
 include("measurement.jl")
 
 import Plots
@@ -85,14 +85,14 @@ function test_XY_derivative_numerical(S, dSdϕ, N, L, shift)
     return sum(res) / length(res)
 end
 function test_derivative(dSdϕ_s, dSdϕ_t, N, L)
-    J = 1
+    β = 1
 
     dims = [L for _ in 1:N]
 
     ϕ = randn((N, dims...))
     ns = [rand(1:L, N) for _ in 1:100]
-    # display([dSdϕ_s(ϕ, J, μ, n) for μ in 1:N for n in ns])
-    sum([abs(dSdϕ_s(ϕ, J, μ, n) - dSdϕ_t(ϕ, J)[μ, n...]) for μ in 1:N for n in ns])
+    # display([dSdϕ_s(ϕ, β, μ, n) for μ in 1:N for n in ns])
+    sum([abs(dSdϕ_s(ϕ, β, μ, n) - dSdϕ_t(ϕ, β)[μ, n...]) for μ in 1:N for n in ns])
 end
 
 
@@ -190,7 +190,7 @@ end
 
 function fa_test_expval3d(ϕ, S, dSdϕ, lf_steps, Δτ, S_args, fa_M, HMC_steps, steps_skipped)
     (D, Lx, Ly, Lz) = size(ϕ)
-    inverse_FK = HMC.inv_FK_3d(Lx, Ly, Lz, fa_M)
+    inverse_FK = HMC.inv_FK_3d_mass(Lx, Ly, Lz, fa_M)
     ΔHs = []
     accepted = []
     for k in 2:HMC_steps+1
@@ -214,14 +214,16 @@ end
 function symbolic2_test()
     @variables x111 x112 x121 x122 x211 x212 x221 x222
     ϕ_symb = reshape([x111 x211 x121 x221 x112 x212 x122 x222], (2, 2, 2))
-    display(Action.S_2d(ϕ_symb, 1))
-    display(Action.S_SAshift_2d(ϕ_symb, 1))
-    # display(Action.dSdϕ_SAshift_2d(ϕ_symb, 1)[2, 2, 1])
-    # display(Action.dSdϕ_2d(ϕ_symb, 1, 2, [2, 1]))
-    # display(Action.dSdϕ_SAshift_2d(ϕ_symb, 1)[1, 2, 1])
-    # display(Action.dSdϕ_2d(ϕ_symb, 1, 1, [2, 1]))
-    # display(Action.dSdϕ_SAshift_2d(ϕ_symb, 1)[2, 2, 2])
-    # display(Action.dSdϕ_2d(ϕ_symb, 1, 2, [2, 2]))
+    display(U_1_LGT.S_2d(ϕ_symb, 1))
+    display(U_1_LGT.S_2d(ϕ_symb, 1))
+    #
+    display(U_1_LGT.dSdϕ_2d(ϕ_symb, 1)[2, 2, 1])
+    display(U_1_LGT.dSdϕ_2d(ϕ_symb, 1, 2, [2, 1]))
+    display(U_1_LGT.dSdϕ_2d(ϕ_symb, 1)[1, 2, 1])
+    display(U_1_LGT.dSdϕ_2d(ϕ_symb, 1, 1, [2, 1]))
+    display(U_1_LGT.dSdϕ_2d(ϕ_symb, 1)[2, 2, 2])
+    display(U_1_LGT.dSdϕ_2d(ϕ_symb, 1, 2, [2, 2]))
+    #
 
 end
 
@@ -245,37 +247,37 @@ end
 
 function benchmarkS2d()
     ϕs = randn((1000, 2, 100, 100))
-    benchmark2d(Action.S_2d, ϕs, true)
-    t1 = benchmark2d(Action.S_2d, ϕs, true)
-    benchmark2d(Action.S_v2_2d, ϕs, true)
-    t2 = benchmark2d(Action.S_v2_2d, ϕs, true)
-    benchmark2d(Action.S_SAshift_2d, ϕs, true)
-    t3 = benchmark2d(Action.S_SAshift_2d, ϕs, true)
+    benchmark2d(U_1_LGT.S_2d, ϕs, true)
+    t1 = benchmark2d(U_1_LGT.S_2d, ϕs, true)
+    benchmark2d(U_1_LGT.S_v2_2d, ϕs, true)
+    t2 = benchmark2d(U_1_LGT.S_v2_2d, ϕs, true)
+    benchmark2d(U_1_LGT.S_2d, ϕs, true)
+    t3 = benchmark2d(U_1_LGT.S_2d, ϕs, true)
     display(sum(abs.(t1 - t3)))
     display(sum(abs.(t2 - t3)))
 
 end
 function benchmarkdSdϕ2d()
     ϕs = randn((1000, 2, 100, 100))
-    benchmark2d(Action.dSdϕ_SAshift_2d, ϕs, false)
-    benchmark2d(Action.dSdϕ_SAshift_2d, ϕs, false)
+    benchmark2d(U_1_LGT.dSdϕ_2d, ϕs, false)
+    benchmark2d(U_1_LGT.dSdϕ_2d, ϕs, false)
 
 end
 function benchmarkS3d()
     ϕs = randn((100, 3, 20, 20, 20))
-    benchmark3d(Action.S_3d, ϕs, true)
-    t1 = benchmark3d(Action.S_3d, ϕs, true)
-    benchmark3d(Action.S_v2_3d, ϕs, true)
-    t2 = benchmark3d(Action.S_v2_3d, ϕs, true)
-    benchmark3d(Action.S_SAshift_3d, ϕs, true)
-    t3 = benchmark3d(Action.S_SAshift_3d, ϕs, true)
+    benchmark3d(U_1_LGT.S_3d, ϕs, true)
+    t1 = benchmark3d(U_1_LGT.S_3d, ϕs, true)
+    benchmark3d(U_1_LGT.S_v2_3d, ϕs, true)
+    t2 = benchmark3d(U_1_LGT.S_v2_3d, ϕs, true)
+    benchmark3d(U_1_LGT.S_3d, ϕs, true)
+    t3 = benchmark3d(U_1_LGT.S_3d, ϕs, true)
     display(sum(abs.(t1 - t3)))
     display(sum(abs.(t2 - t3)))
 end
 function benchmarkdSdϕ3d()
     ϕs = randn((100, 3, 20, 20, 20))
-    benchmark3d(Action.dSdϕ_SAshift_3d, ϕs, false)
-    benchmark3d(Action.dSdϕ_SAshift_3d, ϕs, false)
+    benchmark3d(U_1_LGT.dSdϕ_3d, ϕs, false)
+    benchmark3d(U_1_LGT.dSdϕ_3d, ϕs, false)
 
 end
 
@@ -383,33 +385,33 @@ end
 
 function main()
 
-    # test_p_dist(Action.S_SAshift_3d, Action.dSdϕ_SAshift_3d, 3, 16, 100, 10, 0.05, (1,), 300)
+    test_p_dist(U_1_LGT.S_3d, U_1_LGT.dSdϕ_3d, 3, 16, 100, 10, 0.05, (1,), 300)
 
-    # test_reversibility(zeros((2, 100, 100)), Action.dSdϕ_SAshift_2d, 1000, 0.05, (1,))
+    test_reversibility(zeros((2, 100, 100)), U_1_LGT.dSdϕ_2d, 1000, 0.05, (1,))
 
-    # test_derivative(Action.dSdϕ_2d, Action.dSdϕ_SAshift_2d, 2,100)
+    test_derivative(U_1_LGT.dSdϕ_2d, U_1_LGT.dSdϕ_2d, 2,100)
 
-    # dSdϕ(ϕ, J, μ, n) = Action.dSdϕ_SAshift_3d(ϕ, J)[μ, n...]
-    # test_derivative_numerical(Action.S_SAshift_3d, dSdϕ, 3, 30, 0.0001)
+    dSdϕ(ϕ, β, μ, n) = U_1_LGT.dSdϕ_3d(ϕ, β)[μ, n...]
+    test_derivative_numerical(U_1_LGT.S_3d, dSdϕ, 3, 30, 0.0001)
 
 
-    # test_expval(zeros((2, 10, 10)), Action.S_2d, Action.dSdϕ_SAshift_2d, 100, 0.05, (1,), 10000, 300)
-    # test_expval(zeros((3, 16, 16, 16)), Action.S_SAshift_3d, Action.dSdϕ_SAshift_3d, 5, 0.2, (1,), 1000, 300)
+    test_expval(zeros((2, 10, 10)), U_1_LGT.S_2d, U_1_LGT.dSdϕ_2d, 100, 0.05, (1,), 10000, 300)
+    test_expval(zeros((3, 16, 16, 16)), U_1_LGT.S_3d, U_1_LGT.dSdϕ_3d, 5, 0.2, (1,), 1000, 300)
 
-    # benchmarkS2d()
-    # benchmarkS3d()
+    benchmarkS2d()
+    benchmarkS3d()
 
-    # benchmarkdSdϕ2d()
-    # benchmarkdSdϕ3d()
-    # symbolic2_test()
+    benchmarkdSdϕ2d()
+    benchmarkdSdϕ3d()
+    symbolic2_test()
 
-    # ΔHΔτ(zeros(3, 16, 16, 16), Action.S_SAshift_3d, Action.dSdϕ_SAshift_3d, (1,), 100, 100)
+    ΔHΔτ(zeros(3, 16, 16, 16), U_1_LGT.S_3d, U_1_LGT.dSdϕ_3d, (1,), 100, 100)
 
-    # random_gauge_transform_action(3, rand(Float64, (3, 32, 32, 32)), Action.S_3d, (1,))
-    # random_gauge_transform_wilson_loop(3, rand(Float64, (3, 32, 32, 32)), site_average_loop3d, (1, 3, 8, 3))
-    # random_gauge_transform_wilson_loop(3, rand(Float64, (3, 32, 32, 32)), rect_wilson_loop_3d, (4, 7, 1, 0.7, 10))
+    random_gauge_transform_action(3, rand(Float64, (3, 32, 32, 32)), U_1_LGT.S_3d, (1,))
+    random_gauge_transform_wilson_loop(3, rand(Float64, (3, 32, 32, 32)), site_average_loop3d, (1, 3, 8, 3))
+    random_gauge_transform_wilson_loop(3, rand(Float64, (3, 32, 32, 32)), rect_wilson_loop_3d, (4, 7, 1, 0.7, 10))
 
-    # fa_test_expval3d(zeros((3, 16, 16, 16)), Action.S_SAshift_3d, Action.dSdϕ_SAshift_3d, 2, 0.5, (1,), 0.1, 2000, 300)
+    fa_test_expval3d(zeros((3, 16, 16, 16)), U_1_LGT.S_3d, U_1_LGT.dSdϕ_3d, 2, 0.5, (1,), 0.1, 2000, 300)
 end
 
 main()

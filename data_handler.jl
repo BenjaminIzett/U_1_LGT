@@ -1,11 +1,7 @@
 module DataHandler
 using DelimitedFiles
-
 using Statistics
-# export save_field
-# export load_field
-# export analyse_data
-# export load_data
+
 export *
 
 function save_field(filename, ϕ)
@@ -43,43 +39,36 @@ function analyse_data(data_filename, output_filename, indices, functions)
     end
 
 end
+function save_data(filename, data)
+    open(filename, "w") do io
+        writedlm(io, data)
+    end
+end
+
+
 function load_data(filename)
     open(filename, "r") do io
         readdlm(io, comments=true)
     end
 end
 
-
-function autocorrelation_a(a, data)
-
-    N = length(data)
-
-    mean_data = mean(data)
-    Γ_0 = var(data)
-
-    Γ_a = (1 / (N - a)) * sum((data[1:N-a] .- mean_data) .* (data[1+a:N] .- mean_data))
-
-    Γ_a / Γ_0
-
-end
-function autocorrelation(a_range, filename)
-    DataHandler.analyse_data("measurements/$filename", "analysis/$filename", tuple(1, [5 for _ in a_range]...), tuple(length, [data -> autocorrelation_a(n, data) for n in a_range]...))
-
-end
-function autocorrelation(a_range, index, filename)
-    DataHandler.analyse_data("measurements/$filename", "analysis/$filename", tuple(1, [index for _ in a_range]...), tuple(length, [data -> autocorrelation_a(n, data) for n in a_range]...))
-
-end
-function autocorrelation(a_range, indices, filename)
-    DataHandler.analyse_data("measurements/$filename", "analysis/$filename", tuple(1, Iterators.flatten([[index for _ in a_range] for index in indices])...), tuple(length, Iterators.flatten([[data -> autocorrelation_a(n, data) for n in a_range] for _ in indices])...))
-
-end
-function calc_specific_heat_capacity(energies)
-    return mean(energies)^2 - var(energies)
+function load_data_reshaped(filename)
+    open(filename, "r") do io
+        N_line = readline(io)
+        N_measurements = parse(Int, split(N_line, ' ')[2])
+        data = readdlm(io, comments=true)
+        shape_2d = size(data)
+        shape_3d = (N_measurements, Int(shape_2d[1] / N_measurements), shape_2d[2])
+        shaped_data = permutedims(reshape(data, shape_3d), (2, 1, 3))
+    end
 end
 
+end
 
-function specific_heat_capacity(filename)
-    DataHandler.analyse_data("measurements/$filename", "specific_heat_capacity/$filename", (3,), (calc_specific_heat_capacity,))
-end
-end
+# function calc_specific_heat_capacity(energies)
+#     return mean(energies)^2 - var(energies)
+# end
+
+# function specific_heat_capacity(filename)
+#     DataHandler.analyse_data("measurements/$filename", "specific_heat_capacity/$filename", (3,), (calc_specific_heat_capacity,))
+# end
