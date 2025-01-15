@@ -2,6 +2,7 @@
 include("hmc.jl")
 include("u_1_lgt.jl")
 include("measurement.jl")
+include("measurement_functions.jl")
 
 import Plots
 using Symbolics
@@ -180,6 +181,7 @@ function test_expval(ϕ, S, dSdϕ, lf_steps, Δτ, S_args, HMC_steps, steps_skip
     end
 
     Plots.plot(ΔHs) |> display
+    histogram(ΔHs[steps_skipped:end], bins=50, title="Histogram of ΔH", xlabel="ΔH", ylabel="Frequency") |> display
     meanΔHs = mean(ΔHs[steps_skipped:end])
 
     exp_ΔH = mean(exp.(ΔHs[steps_skipped:end] * -1))
@@ -188,13 +190,13 @@ function test_expval(ϕ, S, dSdϕ, lf_steps, Δτ, S_args, HMC_steps, steps_skip
     @info "Checking the mean value of the exponental of the ΔH" exp_ΔH std_exp_exp_ΔH lf_steps Δτ HMC_steps steps_skipped acceptance_rate meanΔHs
 end
 
-function fa_test_expval3d(ϕ, S, dSdϕ, lf_steps, Δτ, S_args, fa_M, HMC_steps, steps_skipped)
+function fa_test_expval3d(ϕ, S, dSdϕ, lf_steps, Δτ, S_args, fa_κ, HMC_steps, steps_skipped)
     (D, Lx, Ly, Lz) = size(ϕ)
-    inverse_FK = HMC.inv_FK_3d_mass(Lx, Ly, Lz, fa_M)
+    inverse_FK = HMC.inv_FK_3d_mass(Lx, Ly, Lz, fa_κ)
     ΔHs = []
     accepted = []
     for k in 2:HMC_steps+1
-        ϕ, ΔH_k, accepted_k = HMC.fa_hmc_run_3d(ϕ, S, dSdϕ, inverse_FK, lf_steps, Δτ, S_args)
+        ϕ, ΔH_k, accepted_k = HMC.fa_hmc_run_3d(ϕ, S, dSdϕ, lf_steps, Δτ, inverse_FK, S_args)
         push!(ΔHs, ΔH_k)
         push!(accepted, accepted_k)
         if k % 100 == 0
@@ -204,7 +206,7 @@ function fa_test_expval3d(ϕ, S, dSdϕ, lf_steps, Δτ, S_args, fa_M, HMC_steps,
 
     Plots.plot(ΔHs) |> display
     meanΔHs = mean(ΔHs[steps_skipped:end])
-
+    histogram(ΔHs[steps_skipped:end], bins=50, title="Histogram of ΔH", xlabel="ΔH", ylabel="Frequency") |> display
     exp_ΔH = mean(exp.(ΔHs[steps_skipped:end] * -1))
     std_exp_exp_ΔH = std(exp.(ΔHs[steps_skipped:end] * -1))
     acceptance_rate = sum(accepted) / length(accepted)
@@ -385,33 +387,38 @@ end
 
 function main()
 
-    test_p_dist(U_1_LGT.S_3d, U_1_LGT.dSdϕ_3d, 3, 16, 100, 10, 0.05, (1,), 300)
+    # test_p_dist(U_1_LGT.S_3d, U_1_LGT.dSdϕ_3d, 3, 16, 100, 10, 0.05, (1,), 300)
 
-    test_reversibility(zeros((2, 100, 100)), U_1_LGT.dSdϕ_2d, 1000, 0.05, (1,))
+    # test_reversibility(zeros((2, 100, 100)), U_1_LGT.dSdϕ_2d, 1000, 0.05, (1,))
 
-    test_derivative(U_1_LGT.dSdϕ_2d, U_1_LGT.dSdϕ_2d, 2,100)
+    # test_derivative(U_1_LGT.dSdϕ_2d, U_1_LGT.dSdϕ_2d, 2,100)
 
-    dSdϕ(ϕ, β, μ, n) = U_1_LGT.dSdϕ_3d(ϕ, β)[μ, n...]
-    test_derivative_numerical(U_1_LGT.S_3d, dSdϕ, 3, 30, 0.0001)
+    # dSdϕ(ϕ, β, μ, n) = U_1_LGT.dSdϕ_3d(ϕ, β)[μ, n...]
+    # test_derivative_numerical(U_1_LGT.S_3d, dSdϕ, 3, 30, 0.0001)
 
 
-    test_expval(zeros((2, 10, 10)), U_1_LGT.S_2d, U_1_LGT.dSdϕ_2d, 100, 0.05, (1,), 10000, 300)
-    test_expval(zeros((3, 16, 16, 16)), U_1_LGT.S_3d, U_1_LGT.dSdϕ_3d, 5, 0.2, (1,), 1000, 300)
+    # test_expval(zeros((2, 10, 10)), U_1_LGT.S_2d, U_1_LGT.dSdϕ_2d, 100, 0.05, (1,), 10000, 300)
+    # test_expval(zeros((3, 16, 16, 16)), U_1_LGT.S_3d, U_1_LGT.dSdϕ_3d, 10, 0.1, (1,), 1000, 100)
 
-    benchmarkS2d()
-    benchmarkS3d()
+    # benchmarkS2d()
+    # benchmarkS3d()
 
-    benchmarkdSdϕ2d()
-    benchmarkdSdϕ3d()
-    symbolic2_test()
+    # benchmarkdSdϕ2d()
+    # benchmarkdSdϕ3d()
+    # symbolic2_test()
 
-    ΔHΔτ(zeros(3, 16, 16, 16), U_1_LGT.S_3d, U_1_LGT.dSdϕ_3d, (1,), 100, 100)
+    # ΔHΔτ(zeros(3, 16, 16, 16), U_1_LGT.S_3d, U_1_LGT.dSdϕ_3d, (1,), 100, 100)
 
-    random_gauge_transform_action(3, rand(Float64, (3, 32, 32, 32)), U_1_LGT.S_3d, (1,))
-    random_gauge_transform_wilson_loop(3, rand(Float64, (3, 32, 32, 32)), site_average_loop3d, (1, 3, 8, 3))
-    random_gauge_transform_wilson_loop(3, rand(Float64, (3, 32, 32, 32)), rect_wilson_loop_3d, (4, 7, 1, 0.7, 10))
+    # random_gauge_transform_action(3, rand(Float64, (3, 32, 32, 32)), U_1_LGT.S_3d, (1,))
+    # random_gauge_transform_wilson_loop(3, rand(Float64, (3, 32, 32, 32)), site_average_loop3d, (1, 3, 8, 3))
+    # random_gauge_transform_wilson_loop(3, rand(Float64, (3, 32, 32, 32)), rect_wilson_loop_3d, (4, 7, 1, 0.7, 10))
 
-    fa_test_expval3d(zeros((3, 16, 16, 16)), U_1_LGT.S_3d, U_1_LGT.dSdϕ_3d, 2, 0.5, (1,), 0.1, 2000, 300)
+    # fa_test_expval3d(zeros((3, 16, 16, 16)), U_1_LGT.S_3d, U_1_LGT.dSdϕ_3d, 3, 1/3, (1,), 0.1, 2000, 200)
+
+    function parisi_loop(ϕ,size)
+        MeasurementFunctions.parisi_loop_range_3d(ϕ,1,[size])[1]
+    end
+    random_gauge_transform_wilson_loop(3,U_1_LGT.rand_lattice_3d(16,16,16),parisi_loop,((3,2),))
 end
 
 main()

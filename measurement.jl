@@ -33,6 +33,20 @@ function acceptance_rate(ϕ_init, update, update_args, initial_steps, measuremen
     rate = accept_count / measurement_steps
 end
 
+function initialise_random_start(ϕ_init, update, update_args, steps)
+    accept_count = 0
+    ϕ = ϕ_init
+    for _ in 1:steps
+        ϕ, ΔH, accepted = update(ϕ, update_args...)
+        accept_count += accepted
+    end
+
+    rate = accept_count / steps
+    display("Random start accept rate: $rate")
+    return ϕ
+end
+
+
 function optimise_update_args(ϕ, update, update_args, lf_index, Δτ_index, initial_steps, measurement_steps)
     # Determines the optimal number of leapfrog steps (lf_steps) and thus the time step (Δτ)
     # under the simplifying constraint that lf_steps * Δτ = 1. (Not always optimal)

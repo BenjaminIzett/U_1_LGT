@@ -9,21 +9,21 @@ using CurveFit
 using Statistics
 using Plots
 
-filename = "loop_autocorrelation_fa05_2.txt"
+filename = "loop_autocorrelation_2.txt"
 
 β = 2
 
-# update = HMC.hmc_run
-# update_args = (U_1_LGT.S_3d, U_1_LGT.dSdϕ_3d, 10, 0.1, (β,))
-# lf_index = 3
-# Δτ_index = 4
-
-update = HMC.fa_hmc_run_3d
-κ = 0.5
-inverse_FK = HMC.inv_FK_3d_kappa(16, 16, 16, κ)
-update_args = (U_1_LGT.S_3d, U_1_LGT.dSdϕ_3d, 10, 0.1, inverse_FK, (β,))
+update = HMC.hmc_run
+update_args = (U_1_LGT.S_3d, U_1_LGT.dSdϕ_3d, 10, 0.1, (β,))
 lf_index = 3
 Δτ_index = 4
+
+# update = HMC.fa_hmc_run_3d
+# κ = 0.5
+# inverse_FK = HMC.inv_FK_3d_kappa(16, 16, 16, κ)
+# update_args = (U_1_LGT.S_3d, U_1_LGT.dSdϕ_3d, 10, 0.1, inverse_FK, (β,))
+# lf_index = 3
+# Δτ_index = 4
 measurement_functions = (MeasurementFunctions.parisi_loop_range_3d,)
 measurement_args = ((β, [(3, 3), (3, 7), (7, 7)]),)
 measurement_info = (β, 16)
@@ -118,11 +118,11 @@ end
 
 data = DataHandler.load_data_reshaped("measurements/$filename")
 # display(data)
-plt = plot_autocorrelation(0:70, [3], data, 30)
+plt = plot_autocorrelation(0:70, [5], data, 30)
 
-data = DataHandler.load_data_reshaped("measurements/loop_autocorrelation_1.txt")
+data = DataHandler.load_data_reshaped("measurements/loop_autocorrelation_fa05_2.txt")
 # display(data)
-plt = plot_autocorrelation!(plt, 0:70, [3], data, 30)
+plt = plot_autocorrelation!(plt, 0:70, [5], data, 30)
 plt |> display
 # plot_log_autocorrelation(0:70, [3], data, 50) |> display
 # mean_data = mean(data, dims=1)

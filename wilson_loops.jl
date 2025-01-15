@@ -111,7 +111,7 @@ function general_hamer_loop_3d(ϕ, ϕ_ape_smeared, ϕ_t, spatial_path, τ)
     mean(loops)
 end
 
-function hamer_loop_3d(ϕ_ape_smeared, U_t, R, τ, β, α, N_smears)
+function hamer_loop_3d(ϕ, ϕ_ape_smeared, U_t, R, τ, β, α, N_smears)
     # α = 0.7
     # ϕ_ape_smeared = N_ape_smearing_3d(exp.(complex.(0, ϕ[1:2, :, :, :])), α, N_smears)
     # U_t = thermally_average_3d(ϕ, β)
@@ -253,7 +253,7 @@ function parisi_3d(ϕ, β)
     return U_t
 end
 
-function parisi_3d_loops(U, U_t, R, τ, β)
+function parisi_3d_loops_old(U, U_t, R, τ, β)
     (D, Lx, Ly, Lz) = size(U)
     if D != 3
         @warn "Only supports 3D lattices" D
@@ -278,6 +278,47 @@ function parisi_3d_loops(U, U_t, R, τ, β)
     x_lines = Ux .* reduce((F, t) -> F .* t, [sa.circshift(Ux_t, -[r, 0, 0]) for r in 1:R-2]) .* sa.circshift(Ux, -[R - 1, 0, 0])
     y_lines = Uy .* reduce((F, t) -> F .* t, [sa.circshift(Uy_t, -[0, r, 0]) for r in 1:R-2]) .* sa.circshift(Uy, -[0, R - 1, 0])
     τ_lines = Uz .* reduce((F, t) -> F .* t, [sa.circshift(Uz_t, -[0, 0, T]) for T in 1:τ-2]) .* sa.circshift(Uz, -[0, 0, τ - 1])
+
+    x_loops = x_lines .* sa.circshift(τ_lines, -[R, 0, 0]) .* conj.(sa.circshift(x_lines, -[0, 0, τ])) .* conj.(τ_lines)
+
+    y_loops = y_lines .* sa.circshift(τ_lines, -[0, R, 0]) .* conj.(sa.circshift(y_lines, -[0, 0, τ])) .* conj.(τ_lines)
+
+    loops = mean(x_loops .+ y_loops) / 2
+    return real(loops)
+end
+
+function parisi_3d_loops(U, U_t, R, τ, β)
+    (D, Lx, Ly, Lz) = size(U)
+    if D != 3
+        @warn "Only supports 3D lattices" D
+        return 0
+    end
+    if τ < 2 || R < 2
+        @warn "Only supports loops of size R > 1, τ > 1." R τ
+        return 0
+    end
+
+    # U_t = parisi_3d(ϕ, β)
+    # U = exp.(complex.(0, ϕ))
+    # U_t = copy(U)
+    Ux = U[1, :, :, :]
+    Uy = U[2, :, :, :]
+    Uz = U[3, :, :, :]
+
+    Ux_t = U_t[1, :, :, :]
+    Uy_t = U_t[2, :, :, :]
+    Uz_t = U_t[3, :, :, :]
+    # return Ux, Uy, Uz, Ux_t, Uy_t, Uz_t
+    x_lines = ComplexF64(0)
+    y_lines = ComplexF64(0)
+    if R == 2
+        x_lines = Ux .* sa.circshift(Ux, -[R - 1, 0, 0])
+        y_lines = Uy .* sa.circshift(Uy, -[0, R - 1, 0])
+    else
+        x_lines = Ux .* reduce((F, t) -> F .* t, [sa.circshift(Ux_t, -[r, 0, 0]) for r in 1:R-2]) .* sa.circshift(Ux, -[R - 1, 0, 0])
+        y_lines = Uy .* reduce((F, t) -> F .* t, [sa.circshift(Uy_t, -[0, r, 0]) for r in 1:R-2]) .* sa.circshift(Uy, -[0, R - 1, 0])
+    end
+    τ_lines = reduce((F, t) -> F .* t, [sa.circshift(Uz_t, -[0, 0, T]) for T in 0:τ-1])
 
     x_loops = x_lines .* sa.circshift(τ_lines, -[R, 0, 0]) .* conj.(sa.circshift(x_lines, -[0, 0, τ])) .* conj.(τ_lines)
 

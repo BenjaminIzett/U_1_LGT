@@ -23,7 +23,7 @@ end
 
 
 #
-int_autocorrelation_time("autocorrelation_1_05_10000.txt")
+# int_autocorrelation_time("autocorrelation_1_05_10000.txt")
 
-file_mean(["autocorrelation/autocorrelation_1_10000_$(nth_run).txt" for nth_run in 1:10], "autocorrelation_mean.txt")
+# file_mean(["autocorrelation/autocorrelation_1_10000_$(nth_run).txt" for nth_run in 1:10], "autocorrelation_mean.txt")
 #

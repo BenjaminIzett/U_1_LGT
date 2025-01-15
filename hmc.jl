@@ -9,6 +9,8 @@ export hmc_run
 export fa_hmc_run_3d
 export fa_leapfrog
 
+
+
 function hmc_run(ϕ, S, dSdϕ, lf_steps, Δτ, S_args)
     # Do I need to change the standard deviation of the momenta p? No there is a scale between computer time and these momenta
 
@@ -28,6 +30,14 @@ function hmc_run(ϕ, S, dSdϕ, lf_steps, Δτ, S_args)
     else
         return ϕ, ΔH, false
     end
+end
+function hmc_run_noMS(ϕ, S, dSdϕ, lf_steps, Δτ, S_args)
+    # Useful when initialising from random
+    p_0 = randn(Float64, size(ϕ))
+
+    ϕ_new, p_new = leapfrog(ϕ, p_0, dSdϕ, lf_steps, Δτ, S_args)
+
+    return ϕ_new
 end
 
 function leapfrog(ϕ, p, dSdϕ, lf_steps, Δτ, S_args)
@@ -64,7 +74,7 @@ end
 
 function inv_FK_3d_kappa(Lx, Ly, Lz, κ)
     # K = (1-κ)-κ∂^2
-    inverse_FK_along_x = reshape([1 / (κ * (4 * sin(π * k1 / Lx)^2 + 4 * sin(π * k2 / Ly)^2 + 4 * sin(π * k3 / Lz)^2) + 1) for k3 in 0:Lz-1 for k2 in 0:Ly-1 for k1 in 0:Lx-1], (Lx, Ly, Lz))
+    inverse_FK_along_x = reshape([1 / (κ * (4 * sin(π * k1 / Lx)^2 + 4 * sin(π * k2 / Ly)^2 + 4 * sin(π * k3 / Lz)^2 - 1) + 1) for k3 in 0:Lz-1 for k2 in 0:Ly-1 for k1 in 0:Lx-1], (Lx, Ly, Lz))
     inverse_FK = zeros((3, Lx, Ly, Lz))
     inverse_FK[1, :, :, :] = inverse_FK_along_x
     inverse_FK[2, :, :, :] = inverse_FK_along_x
