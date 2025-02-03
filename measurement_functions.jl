@@ -19,7 +19,7 @@ function hamer_loop_range_3d(ϕ, β, α, N_smears, R_τ_pairs)
     U_t = WilsonLoops.parisi_dir_3d(ϕ, β, 3)
 
 
-    [WilsonLoops.hamer_loop_3d(ϕ,ϕ_ape_smeared, U_t, R, τ, β, α, N_smears) for (R, τ) in R_τ_pairs]
+    [WilsonLoops.hamer_loop_3d(ϕ, ϕ_ape_smeared, U_t, R, τ, β, α, N_smears) for (R, τ) in R_τ_pairs]
 end
 
 function parisi_loop_range_3d(ϕ, β, R_τ_pairs)
@@ -30,5 +30,8 @@ function parisi_loop_range_3d(ϕ, β, R_τ_pairs)
     [WilsonLoops.parisi_3d_loops(U, U_t, R, τ, β) for (R, τ) in R_τ_pairs]
 end
 
+function flux_tubes_x_3d(ϕ, τs)
+    return WilsonLoops.flux_tubes_x(ϕ, τs)
+end
 
 end

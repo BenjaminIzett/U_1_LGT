@@ -362,6 +362,7 @@ function random_gauge_transform_action(N, ϕ, S, S_args)
         ϕ_n[1, :, :, :] += Δχ1
         ϕ_n[2, :, :, :] += Δχ2
         ϕ_n[3, :, :, :] += Δχ3
+
         @info "Random Gauge Transformation" abs(S(ϕ, S_args...) - S(ϕ_n, S_args...))
     else
         display("Not implemented for N ≠ 3")
@@ -415,10 +416,14 @@ function main()
 
     # fa_test_expval3d(zeros((3, 16, 16, 16)), U_1_LGT.S_3d, U_1_LGT.dSdϕ_3d, 3, 1/3, (1,), 0.1, 2000, 200)
 
-    function parisi_loop(ϕ,size)
-        MeasurementFunctions.parisi_loop_range_3d(ϕ,1,[size])[1]
+    function parisi_loop(ϕ, size)
+        MeasurementFunctions.parisi_loop_range_3d(ϕ, 1, [size])[1]
     end
-    random_gauge_transform_wilson_loop(3,U_1_LGT.rand_lattice_3d(16,16,16),parisi_loop,((3,2),))
+    function flux_tube(ϕ, τ)
+        MeasurementFunctions.flux_tubes_x_3d(ϕ, [τ])[1]
+    end
+    # random_gauge_transform_wilson_loop(3, U_1_LGT.rand_lattice_3d(16, 16, 16), parisi_loop, ((10, 2),))
+    random_gauge_transform_wilson_loop(3, U_1_LGT.rand_lattice_3d(16, 16, 16), flux_tube, [5])
 end
 
 main()

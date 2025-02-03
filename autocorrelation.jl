@@ -30,7 +30,18 @@ function autocorrelation(a_range, indices, filename)
 end
 
 
-function int_autocorrelation_time(ρ_a, N)
+function autocorrelation_range(a_range, data)
+    map(a -> autocorrelation_a(a, data), a_range)
+end
+function calc_autocorrelation_index(a_range, index, data)
+    mapslices(d -> autocorrelation_range(a_range, d), data[:, :, index], dims=2)
+end
+function calc_autocorrelation_indices(a_range, indices, data)
+    map(index -> calc_autocorrelation_index(a_range, index, data), indices)
+end
+
+
+function int_autocorrelation_time(ρ_a, N; print_M=false)
     # The search for M is not optimal but good enough
     M = 1
     τ_int = 1 / 2 + ρ_a[1]
@@ -44,7 +55,9 @@ function int_autocorrelation_time(ρ_a, N)
         end
     end
     δτ_int = sqrt((4 * M + 2) / N) * τ_int
-    display(M)
+    if print_M
+        display(M)
+    end
     return τ_int, δτ_int
 end
 

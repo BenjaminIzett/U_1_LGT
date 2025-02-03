@@ -176,10 +176,10 @@ include("hmc.jl")
 
 β = 2
 
-# update = HMC.hmc_run
-# update_args = (U_1_LGT.S_3d, U_1_LGT.dSdϕ_3d, 10, 0.1, (β,))
-# lf_index = 3
-# Δτ_index = 4
+update = HMC.hmc_run
+update_args = (U_1_LGT.S_3d, U_1_LGT.dSdϕ_3d, 10, 0.1, (β,))
+lf_index = 3
+Δτ_index = 4
 
 # update = HMC.fa_hmc_run_3d
 # κ = 0.25
@@ -192,13 +192,30 @@ include("hmc.jl")
 # measurement_info = (β, 16)
 # Measurement.measure("loop_autocorrelation_1.txt", "a", U_1_LGT.zero_lattice_3d(16, 16, 16), 250, 1, 1000, update, update_args, measurement_functions, measurement_args, measurement_info)
 
-update = HMC.fa_hmc_run_3d
-κ = 0.5
-inverse_FK = HMC.inv_FK_3d_kappa(16, 16, 16, κ)
-update_args = (U_1_LGT.S_3d, U_1_LGT.dSdϕ_3d, 10, 0.1, inverse_FK, (β,))
-lf_index = 3
-Δτ_index = 4
-measurement_functions = (MeasurementFunctions.hamer_loop_range_3d,)
-measurement_args = ((β, 0.7,10,[(R, τ) for R in 1:10 for τ in 1:10]),)
+# update = HMC.fa_hmc_run_3d
+# κ = 0.5
+# inverse_FK = HMC.inv_FK_3d_kappa(16, 16, 16, κ)
+# update_args = (U_1_LGT.S_3d, U_1_LGT.dSdϕ_3d, 10, 0.1, inverse_FK, (β,))
+# lf_index = 3
+# Δτ_index = 4
+# measurement_functions = (MeasurementFunctions.hamer_loop_range_3d,)
+measurement_functions = (MeasurementFunctions.mean_plaquette_3d,)
+measurement_args = ((β,),)
 measurement_info = (β, 16)
-Measurement.repeat_optimise_measure("hamer_check1.txt", U_1_LGT.zero_lattice_3d(16, 16, 16), 1000, 10, 1000, update, update_args, measurement_functions, measurement_args, measurement_info, lf_index, Δτ_index, 250, 1000, 10)
+# Measurement.repeat_optimise_measure("hamer_check1.txt", U_1_LGT.zero_lattice_3d(16, 16, 16), 1000, 10, 1000, update, update_args, measurement_functions, measurement_args, measurement_info, lf_index, Δτ_index, 250, 1000, 10)
+
+# optimised_args = Measurement.optimise_update_args(U_1_LGT.zero_lattice_3d(16, 16, 16), update, update_args, lf_index, Δτ_index, 250, 1000)
+# Measurement.measure("timecheck.txt", "w", U_1_LGT.zero_lattice_3d(16, 16, 16), 200, 10, 5, update, update_args, measurement_functions, measurement_args, measurement_info)
+# @time Measurement.measure("timecheck.txt", "w", U_1_LGT.zero_lattice_3d(16, 16, 16), 1000, 1000, 5, update, update_args, measurement_functions, measurement_args, measurement_info)
+
+#fa:196s vs 160s 20% slower
+
+ϕ_init = U_1_LGT.rand_lattice_3d(16, 16, 16)
+
+random_update_args = (U_1_LGT.S_3d, U_1_LGT.dSdϕ_3d, 1, 0.1, (β,))
+ϕ = Measurement.initialise_random_start(ϕ_init, update, random_update_args, 1000)
+ϕ = Measurement.initialise_random_start(ϕ, update, random_update_args, 1000)
+# for _ in 1000
+#     ϕ = HMC.hmc_run_noMS(ϕ, U_1_LGT.S_3d, U_1_LGT.dSdϕ_3d, 1, 0.1, (β,))
+# end
+Measurement.repeat_optimise_measure("hamer_check_random_start_1.txt", ϕ, 1000, 10, 1000, update, update_args, measurement_functions, measurement_args, measurement_info, lf_index, Δτ_index, 250, 1000, 10)

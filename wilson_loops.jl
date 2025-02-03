@@ -324,8 +324,16 @@ function parisi_3d_loops(U, U_t, R, τ, β)
 
     y_loops = y_lines .* sa.circshift(τ_lines, -[0, R, 0]) .* conj.(sa.circshift(y_lines, -[0, 0, τ])) .* conj.(τ_lines)
 
-    loops = mean(x_loops .+ y_loops) / 2
+    loops = (mean(x_loops) + mean(y_loops)) / 2
     return real(loops)
 end
+
+function flux_tubes_x(ϕ, τs)
+    # Assumes the x direction is 1.
+    summed_ϕ = sum(ϕ[1, :, :, :], dims=1)
+
+    [mean(cos.(summed_ϕ .- sa.circshift(summed_ϕ, -[0, 0, τ]))) for τ in τs]
+end
+
 
 end

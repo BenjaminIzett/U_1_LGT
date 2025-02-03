@@ -47,7 +47,7 @@ function initialise_random_start(ϕ_init, update, update_args, steps)
 end
 
 
-function optimise_update_args(ϕ, update, update_args, lf_index, Δτ_index, initial_steps, measurement_steps)
+function optimise_update_args(ϕ, update, update_args, lf_index, Δτ_index, trajectory_length, initial_steps, measurement_steps)
     # Determines the optimal number of leapfrog steps (lf_steps) and thus the time step (Δτ)
     # under the simplifying constraint that lf_steps * Δτ = 1. (Not always optimal)
 
@@ -60,7 +60,7 @@ function optimise_update_args(ϕ, update, update_args, lf_index, Δτ_index, ini
     lf_steps_initial = max(1, update_args[lf_index])
     optimised_update_args = [i for i in update_args]
     optimised_update_args[lf_index] = lf_steps_initial
-    optimised_update_args[Δτ_index] = 1 / lf_steps_initial
+    optimised_update_args[Δτ_index] = trajectory_length / lf_steps_initial
     rate = acceptance_rate(ϕ, update, optimised_update_args, initial_steps, measurement_steps)
 
     flag = false
@@ -81,15 +81,15 @@ function optimise_update_args(ϕ, update, update_args, lf_index, Δτ_index, ini
             end
         end
         optimised_update_args[lf_index] = new_lf_steps
-        optimised_update_args[Δτ_index] = 1 / new_lf_steps
+        optimised_update_args[Δτ_index] = trajectory_length / new_lf_steps
 
         rate = acceptance_rate(ϕ, update, optimised_update_args, measurement_steps, initial_steps)
         itr_count += 1
     end
     if flag || (itr_count >= max_count)
-        display("Failed to find optimised parameters, rate: $rate, lf_steps: $(optimised_update_args[lf_index]), itr_count: $itr_count.")
+        display("Failed to find optimised parameters, rate: $rate, lf_steps: $(optimised_update_args[lf_index]), Δτ: $(optimised_update_args[Δτ_index]), itr_count: $itr_count.")
     else
-        display("Successfully found optimised parameters, rate: $rate, lf_steps: $(optimised_update_args[lf_index]), itr_count: $itr_count.")
+        display("Successfully found optimised parameters, rate: $rate, lf_steps: $(optimised_update_args[lf_index]), Δτ: $(optimised_update_args[Δτ_index]), itr_count: $itr_count.")
     end
     return tuple(optimised_update_args...)
 end
@@ -131,13 +131,13 @@ function measure(filename, mode, ϕ_init, initial_steps, measurement_interval, N
     #save field for later con
 end
 
-function optimised_measure(filename, mode, ϕ_init, initial_steps, measurement_interval, N_measurements, update, update_args, measurement_functions, measurement_args, measurement_info, lf_index, Δτ_index, optimise_initial_steps, optimise_measurement_steps)
-    optimised_update_args = optimise_update_args(ϕ_init, update, update_args, lf_index, Δτ_index, optimise_initial_steps, optimise_measurement_steps)
+function optimised_measure(filename, mode, ϕ_init, initial_steps, measurement_interval, N_measurements, update, update_args, measurement_functions, measurement_args, measurement_info, lf_index, Δτ_index, trajectory_length, optimise_initial_steps, optimise_measurement_steps)
+    optimised_update_args = optimise_update_args(ϕ_init, update, update_args, lf_index, Δτ_index, trajectory_length, optimise_initial_steps, optimise_measurement_steps)
     measure(filename, mode, ϕ_init, initial_steps, measurement_interval, N_measurements, update, optimised_update_args, measurement_functions, measurement_args, measurement_info)
 end
 
-function repeat_optimise_measure(filename, ϕ_init, initial_steps, measurement_interval, N_measurements, update, update_args, measurement_functions, measurement_args, measurement_info, lf_index, Δτ_index, optimise_initial_steps, optimise_measurement_steps, N_repeats)
-    optimised_update_args = optimise_update_args(ϕ_init, update, update_args, lf_index, Δτ_index, optimise_initial_steps, optimise_measurement_steps)
+function repeat_optimise_measure(filename, ϕ_init, initial_steps, measurement_interval, N_measurements, update, update_args, measurement_functions, measurement_args, measurement_info, lf_index, Δτ_index, trajectory_length, optimise_initial_steps, optimise_measurement_steps, N_repeats)
+    optimised_update_args = optimise_update_args(ϕ_init, update, update_args, lf_index, Δτ_index, trajectory_length, optimise_initial_steps, optimise_measurement_steps)
     for _ in 1:N_repeats
         measure(filename, "a", ϕ_init, initial_steps, measurement_interval, N_measurements, update, optimised_update_args, measurement_functions, measurement_args, measurement_info)
     end
@@ -149,10 +149,10 @@ function measure_range(filename, ϕ_init, initial_steps, measurement_interval, N
     end
 end
 
-function optimised_measure_range(filename, ϕ_init, initial_steps, measurement_interval, N_measurements, update, update_args_list, measurement_functions, measurement_args_list, measurement_info_list, lf_index, Δτ_index, optimise_initial_steps, optimise_measurement_steps)
+function optimised_measure_range(filename, ϕ_init, initial_steps, measurement_interval, N_measurements, update, update_args_list, measurement_functions, measurement_args_list, measurement_info_list, lf_index, Δτ_index, trajectory_length, optimise_initial_steps, optimise_measurement_steps)
     # Note if lf_step or Δτ are included in measurement_info or (this should not happen) measurement_args they will not be updated
     for (update_args, measurement_args, measurement_info) in zip(update_args_list, measurement_args_list, measurement_info_list)
-        optimised_measure(filename, "a", ϕ_init, initial_steps, measurement_interval, N_measurements, update, update_args, measurement_functions, measurement_args, measurement_info, lf_index, Δτ_index, optimise_initial_steps, optimise_measurement_steps)
+        optimised_measure(filename, "a", ϕ_init, initial_steps, measurement_interval, N_measurements, update, update_args, measurement_functions, measurement_args, measurement_info, lf_index, Δτ_index, trajectory_length, optimise_initial_steps, optimise_measurement_steps)
     end
 end
 
