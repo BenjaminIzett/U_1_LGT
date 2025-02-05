@@ -328,11 +328,15 @@ function parisi_3d_loops(U, U_t, R, τ, β)
     return real(loops)
 end
 
-function flux_tubes_x(ϕ, τs)
+function flux_tubes_x(ϕ, α, N, τs)
     # Assumes the x direction is 1.
-    summed_ϕ = sum(ϕ[1, :, :, :], dims=1)
 
-    [mean(cos.(summed_ϕ .- sa.circshift(summed_ϕ, -[0, 0, τ]))) for τ in τs]
+    # summed_ϕ = sum(ϕ[1, :, :, :], dims=1)
+    # [mean(cos.(summed_ϕ .- sa.circshift(summed_ϕ, -[0, 0, τ]))) for τ in τs]
+
+    U_smeared = N_ape_smearing_3d(exp.(complex.(0, ϕ)), α, N)
+    walls = prod(U_smeared[1, :, :, :], dims=1)
+    [sum(real(walls .* sa.circshift(conj(walls), -[0, 0, τ]))) for τ in τs]
 end
 
 

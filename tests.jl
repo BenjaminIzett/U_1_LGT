@@ -420,7 +420,7 @@ function main()
         MeasurementFunctions.parisi_loop_range_3d(ϕ, 1, [size])[1]
     end
     function flux_tube(ϕ, τ)
-        MeasurementFunctions.flux_tubes_x_3d(ϕ, [τ])[1]
+        MeasurementFunctions.flux_tubes_x_3d(ϕ, 0.7, 10, [τ])[1]
     end
     # random_gauge_transform_wilson_loop(3, U_1_LGT.rand_lattice_3d(16, 16, 16), parisi_loop, ((10, 2),))
     random_gauge_transform_wilson_loop(3, U_1_LGT.rand_lattice_3d(16, 16, 16), flux_tube, [5])

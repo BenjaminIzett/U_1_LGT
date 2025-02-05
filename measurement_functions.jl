@@ -30,8 +30,8 @@ function parisi_loop_range_3d(ϕ, β, R_τ_pairs)
     [WilsonLoops.parisi_3d_loops(U, U_t, R, τ, β) for (R, τ) in R_τ_pairs]
 end
 
-function flux_tubes_x_3d(ϕ, τs)
-    return WilsonLoops.flux_tubes_x(ϕ, τs)
+function flux_tubes_x_3d(ϕ, α, N, τs)
+    return WilsonLoops.flux_tubes_x(ϕ, α, N, τs)
 end
 
 end
