@@ -33,5 +33,8 @@ end
 function flux_tubes_x_3d(ϕ, α, N, τs)
     return WilsonLoops.flux_tubes_x(ϕ, α, N, τs)
 end
+function flux_tubes_x_test_3d(ϕ, α, N)
+    return WilsonLoops.flux_tubes_x_test(ϕ, α, N)
+end
 
 end
