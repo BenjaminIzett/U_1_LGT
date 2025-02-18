@@ -44,6 +44,14 @@ function save_data(filename, data)
         writedlm(io, data)
     end
 end
+function save_data_custom(filename, data, mode="w", comment="")
+    open(filename, mode) do io
+        if (comment != "")
+            write(io, "# $comment\n")
+        end
+        writedlm(io, data)
+    end
+end
 
 
 function load_data(filename)

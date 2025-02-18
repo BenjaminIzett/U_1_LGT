@@ -52,7 +52,7 @@ function optimise_update_args(ϕ, update, update_args, lf_index, Δτ_index, tra
     # under the simplifying constraint that lf_steps * Δτ = 1. (Not always optimal)
 
     # Should probably change update_args to a dictionary instead of using indices
-    min_rate = 0.625
+    min_rate = 0.62
     optimal_rate = 0.65
     max_rate = 0.75
     max_count = 10
@@ -66,11 +66,11 @@ function optimise_update_args(ϕ, update, update_args, lf_index, Δτ_index, tra
     flag = false
     itr_count = 0
     while !flag && (itr_count < max_count) && ((rate < min_rate) | (rate > max_rate))
-
+        display(rate)
         new_lf_steps = Int(round(optimised_update_args[lf_index] * (1 + optimal_rate - rate)))
-
+        display(new_lf_steps)
         if new_lf_steps == optimised_update_args[lf_index]
-            if rate < min_rate
+            if rate > max_rate
                 if new_lf_steps > 1
                     new_lf_steps -= 1
                 else

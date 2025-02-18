@@ -176,15 +176,18 @@ include("hmc.jl")
 
 β = 2
 
-update = HMC.hmc_run
-update_args = (U_1_LGT.S_3d, U_1_LGT.dSdϕ_3d, 10, 0.1, (β,))
+# update = HMC.hmc_run
+# update_args = (U_1_LGT.S_3d, U_1_LGT.dSdϕ_3d, 10, 0.1, (β,))
 lf_index = 3
 Δτ_index = 4
 
-# update = HMC.fa_hmc_run_3d
-# κ = 0.25
-# inverse_FK = HMC.inv_FK_3d_kappa(16, 16, 16, κ)
-# update_args = (U_1_LGT.S_3d, U_1_LGT.dSdϕ_3d, 10, 0.1, inverse_FK, (β,))
+trajectory_length = 1
+
+
+update = HMC.fa_hmc_run_3d
+κ = 0.99
+inverse_FK = HMC.inv_FK_3d_kappa(16, 16, 16, κ)
+update_args = (U_1_LGT.S_3d, U_1_LGT.dSdϕ_3d, 10, 0.1, inverse_FK, (β,))
 # lf_index = 3
 # Δτ_index = 4
 # measurement_functions = (MeasurementFunctions.parisi_loop_range_3d,)
@@ -199,8 +202,8 @@ lf_index = 3
 # lf_index = 3
 # Δτ_index = 4
 # measurement_functions = (MeasurementFunctions.hamer_loop_range_3d,)
-measurement_functions = (MeasurementFunctions.mean_plaquette_3d,)
-measurement_args = ((β,),)
+measurement_functions = (MeasurementFunctions.flux_tubes_x_test_3d,)
+measurement_args = ((0.7, 10,),)
 measurement_info = (β, 16)
 # Measurement.repeat_optimise_measure("hamer_check1.txt", U_1_LGT.zero_lattice_3d(16, 16, 16), 1000, 10, 1000, update, update_args, measurement_functions, measurement_args, measurement_info, lf_index, Δτ_index, 250, 1000, 10)
 
@@ -212,10 +215,12 @@ measurement_info = (β, 16)
 
 ϕ_init = U_1_LGT.rand_lattice_3d(16, 16, 16)
 
-random_update_args = (U_1_LGT.S_3d, U_1_LGT.dSdϕ_3d, 1, 0.1, (β,))
-ϕ = Measurement.initialise_random_start(ϕ_init, update, random_update_args, 1000)
-ϕ = Measurement.initialise_random_start(ϕ, update, random_update_args, 1000)
+# random_update_args = (U_1_LGT.S_3d, U_1_LGT.dSdϕ_3d, 1, 0.1, (β,))
+# ϕ = Measurement.initialise_random_start(ϕ_init, update, random_update_args, 1000)
+# ϕ = Measurement.initialise_random_start(ϕ, update, random_update_args, 1000)
 # for _ in 1000
 #     ϕ = HMC.hmc_run_noMS(ϕ, U_1_LGT.S_3d, U_1_LGT.dSdϕ_3d, 1, 0.1, (β,))
 # end
-Measurement.repeat_optimise_measure("hamer_check_random_start_1.txt", ϕ, 1000, 10, 1000, update, update_args, measurement_functions, measurement_args, measurement_info, lf_index, Δτ_index, 250, 1000, 10)
+# Measurement.repeat_optimise_measure("hamer_check_random_start_1.txt", ϕ, 1000, 10, 1000, update, update_args, measurement_functions, measurement_args, measurement_info, lf_index, Δτ_index, 250, 1000, 10)
+
+Measurement.optimised_measure("flux_tube_test.txt", "a", U_1_LGT.zero_lattice_3d(16, 16, 16), 500, 5, 1000, update, update_args, measurement_functions, measurement_args, measurement_info, lf_index, Δτ_index, trajectory_length, 500, 1000)
