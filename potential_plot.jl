@@ -86,12 +86,12 @@ function loop_ratio(data, R_values, τ_values, R)
     loop_plot
 end
 
-# DataHandler.analyse_data("measurements/hamer_loop_check_2.txt","analysis/hamer_loop_check_fa09_2.txt",3:102,(mean for _ in 1:100))
-# data=DataHandler.load_data("analysis/hamer_loop_check_2.txt")
-# static_quark_potential(data,1:10,1:10)
+DataHandler.analyse_data("measurements/hamer_loop_check_2.txt","analysis/hamer_loop_check_fa09_2.txt",3:102,(mean for _ in 1:100))
+data=DataHandler.load_data("analysis/hamer_loop_check_2.txt")
+static_quark_potential(data,1:10,1:10)
 
 # DataHandler.analyse_data("measurements/parisi_potential_check_fa099_β2_2.txt", "analysis/parisi_potential_check_fa099_β2_2.txt", 3:83, (mean for _ in 1:81))
-data = DataHandler.load_data("analysis/parisi_potential_check_fa099_β2_1.txt")
-static_quark_potential(data, 1:10, 1:10)
+# data = DataHandler.load_data("analysis/parisi_potential_check_fa099_β2_1.txt")
+# static_quark_potential(data, 1:10, 1:10)
 
-loop_ratio(data,1:10,1:10,8)
+# loop_ratio(data,1:10,1:10,8)

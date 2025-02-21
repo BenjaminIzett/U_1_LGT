@@ -7,7 +7,7 @@ include("../data_handler.jl")
 using Statistics
 using Plots
 
-filename = "hamer_check_random_start_1.txt"
+filename = "check_hamer_7.txt"
 
 # dataβ = [1.0, 1.35, 1.41, 1.55, 1.70, 1.90, 2.0, 2.25, 2.5, 2.75, 3.0]
 dataβ = [0.2, 0.4, 0.6, 0.8, 1.0, 1.35, 1.41, 1.55, 1.70, 1.90, 2.0, 2.25, 2.5, 2.75, 3.0, 3.2, 3.4, 3.6, 3.8, 4.0]

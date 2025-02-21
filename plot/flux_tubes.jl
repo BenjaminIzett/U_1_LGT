@@ -26,7 +26,7 @@ for n in 1:N
     push!(ratio_errors, sqrt.((errors[n, 2:(endpoint-1)] ./ mean_data[n, 2:(endpoint-1)]) .^ 2 .+ (errors[n, 1:(endpoint-2)] ./ mean_data[n, 1:(endpoint-2)]) .^ 2))
 end
 
-K = 5
+K = 4
 # display(ratios[K][15])
 testfit = AIC.fit_window(Polynomial, (0,), 1:length(ratios[K]), ratios[K], ratio_errors[K], 1)
 plt = plot(1:length(ratios[K]), ratios[K], yerrors=ratio_errors[K])
@@ -59,4 +59,3 @@ tels = [
     2.9890909090909084]
 plt = scatter!(plt, tels, tevs, marker=:x)
 plt |> display
-display(readline())
