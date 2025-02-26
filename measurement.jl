@@ -55,7 +55,7 @@ function optimise_update_args(ϕ, update, update_args, lf_index, Δτ_index, tra
     min_rate = 0.62
     optimal_rate = 0.65
     max_rate = 0.75
-    max_count = 10
+    max_count = 8
 
     lf_steps_initial = max(1, update_args[lf_index])
     optimised_update_args = [i for i in update_args]
@@ -87,6 +87,11 @@ function optimise_update_args(ϕ, update, update_args, lf_index, Δτ_index, tra
         itr_count += 1
     end
     if flag || (itr_count >= max_count)
+        lf_steps = optimised_update_args[lf_index]
+        optimised_update_args[lf_index] = lf_steps + 1
+        optimised_update_args[Δτ_index] = trajectory_length / (lf_steps + 1)
+
+        rate = acceptance_rate(ϕ, update, optimised_update_args, measurement_steps, initial_steps)
         display("Failed to find optimised parameters, rate: $rate, lf_steps: $(optimised_update_args[lf_index]), Δτ: $(optimised_update_args[Δτ_index]), itr_count: $itr_count.")
     else
         display("Successfully found optimised parameters, rate: $rate, lf_steps: $(optimised_update_args[lf_index]), Δτ: $(optimised_update_args[Δτ_index]), itr_count: $itr_count.")

@@ -150,11 +150,11 @@ colors = collect(palette(:default))
 
 # plt |> display
 
-
+# on 32^3 lattice
 βs = [2.0, 2.2, 2.4, 2.6, 2.8, 3.0]
 trajectory_lengths = [0.6, 0.7, 0.8, 0.9, 1.0, 1.2]
 κs = [0.8, 0.9, 0.95, 0.99]
-loop = [5]
+loop = [5] # [plaq, 2x2 4x4 8x8 16x16]
 
 plt = plot()
 layout = @layout [a b; c d; e f]
